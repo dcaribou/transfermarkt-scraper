@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import scrapy
 from scrapy.shell import inspect_response
+from inflection import parameterize, underscore
 
 class AutoSpider(scrapy.Spider):
     name = 'auto'
-    start_urls = ['https://www.transfermarkt.co.uk/']
+    base_url = 'https://www.transfermarkt.co.uk/'
+    start_urls = [base_url]
 
     def parse(self, response):
         """Parse Transfermarkt entrypoint page. From here we collect all confederations urls
@@ -17,6 +19,10 @@ class AutoSpider(scrapy.Spider):
         confederations = response.css(
             'div.konfoederationenbox > a::attr(href)'
         ).getall()
+
+        # lets limit scrapping to 'europa' for now
+        confederations = [x for x in confederations if 'europa' in x]
+
         for confederation in confederations:
             object = {'confederation': confederation.split('/')[-1]}
             yield object
@@ -44,9 +50,14 @@ class AutoSpider(scrapy.Spider):
         valid_rows = (
             x for x in competitions if len(x.css('td')) > 1
         )
-        for competition in valid_rows:
+        for competition in valid_rows :
             url = competition.css('a::attr(href)').getall()[1]
             name = url.split('/')[-1]
+
+            # let's limit scrapping to the Premier League for now
+            if name != 'GB1':
+                continue
+
             yield {
                 'competition': {
                     'name': name,
@@ -112,6 +123,10 @@ class AutoSpider(scrapy.Spider):
         @scrapes player
         """
 
+        # limit scrapping to manchester-city for now
+        if team != 'manchester-city':
+            return
+
         player_hrefs = response.css('a.spielprofil_tooltip::attr(href)').getall()
         without_duplicates = list(set(player_hrefs))
         for href in without_duplicates:
@@ -126,9 +141,8 @@ class AutoSpider(scrapy.Spider):
                 }
             }
             # we are interested on a player's detailed career statistics
-            detailed_statistics = href + '/plus/1?saison=2018'
-            yield response.follow(
-                detailed_statistics,
+            yield scrapy.Request(
+                url=self.base_url+name+'/leistungsdaten/spieler/'+id+'/plus/1?saison=2018',
                 callback=self.parse_player
             )
 
@@ -136,11 +150,46 @@ class AutoSpider(scrapy.Spider):
         """Parse player's page. From this page finally collect all player appearances
 
         @url https://www.transfermarkt.co.uk/sergio-aguero/leistungsdaten/spieler/26399/plus/1?saison=2018
-        @returns items 26 26
+        @returns items 46 46
         @scrapes appearance
         """
+
         def parse_stats_table(table):
+            """Parses a table of player's statistics."""
+            header_elements = [
+                underscore(parameterize(header)) for header in
+                table.css("th::text").getall() + table.css("th > span::attr(title)").getall()
+            ]
+
+            value_elements_matrix = [
+                [ element.strip() for element in
+                  row.xpath('td[not(descendant::*[local-name() = "img"])]').xpath('string(.)').getall()
+                ]
+                for row in table.css('tr') if len(row.css('td').getall()) > 8
+            ]
+
+            for value_elements in value_elements_matrix:
+                assert(len(header_elements) == len(value_elements))
+                yield dict(zip(header_elements, value_elements))
+
+        def is_stats_table(table):
+            """Checks whether a table is expected to contain player stats or not,
+            by looking for the word 'Matchday' in the table headers. This is
+            used for filtering season summary tables.
+            """
+            return False if len(table.css('div.summary')) > 0 else True
 
         # stats tables are 'responsive-tables' (except the first one, that is
         # a summary table)
+        competitions = response.css('div.table-header > a::attr(name)').getall()[1:]
         stats_tables = response.css('div.responsive-table')[1:]
+        assert(len(competitions) == len(stats_tables))
+        for competition, table in zip(competitions, stats_tables):
+            stats = parse_stats_table(table)
+            for appearance in stats:
+                yield {
+                    'appearance': {
+                        'stats' : appearance,
+                        'competition': competition
+                    }
+                }
