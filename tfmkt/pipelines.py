@@ -23,14 +23,14 @@ class CleanAppearancePipeline(object):
                 # date comes as 'Apr 3, 2019', dateutil parser can deal with
                 # this and other formats
                 if key == 'date':
-                    value = dateutil.parser.parse(value)
+                    value = dateutil.parser.parse(value).strftime("%Y-%m-%d")
                 # numeric statistics have empty strings inteand of 0s
                 # we convert them here
                 if type(value) == str and len(value) == 0:
                     value = 0
                 # most of the appearance fields are ints in a string format
                 # let's try to give them their right type
-                if type(value) == str:
+                if type(value) and key != 'date' == str:
                     try:
                         value = int(value)
                     except ValueError:
