@@ -8,11 +8,10 @@ class CleanAppearancePipeline(object):
         """Takes appearances from the 'auto' spider and cleans them and converts
         them to appropriate types
         """
-        # we just want to clean appearances for now
-        if item.get('appearance') is not None:
-            # clean stats
-            stats = item['appearance']['stats']
-            for key, value in stats.items():
+        def clean_appearance(appearance):
+            """Clean a single appearance"""
+            cleaned_appearance = appearance.copy()
+            for key, value in appearance.items():
                 # minutes_played have an ending quote (for 'minutes')
                 # we strip it out and convert it to int
                 if (
@@ -41,9 +40,15 @@ class CleanAppearancePipeline(object):
                         # the string
                         value = parameterize(value)
 
-                stats[key] = value
+                cleaned_appearance[key] = value
 
-            item['appearance']['stats'] = stats
+            return cleaned_appearance
+
+        # we just want to clean appearances for now
+        if item.get('stats') is not None:
+            # clean stats
+            stats = item['stats']
+            item['stats'] = list(map(clean_appearance, stats))
             return item
         else:
             return item

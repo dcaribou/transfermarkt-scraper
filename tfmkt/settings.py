@@ -21,6 +21,9 @@ USER_AGENT = 'tfmkt-parser (https://github.com/dcaribou/tfmktscraper)'
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
 
+FEED_FORMAT = 'jsonlines'
+FEED_URI = 'stdout'
+
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
 

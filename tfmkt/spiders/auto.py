@@ -12,8 +12,7 @@ class AutoSpider(scrapy.Spider):
         """Parse Transfermarkt entrypoint page. From here we collect all confederations urls
 
         @url https://www.transfermarkt.co.uk
-        @returns items 6 6
-        @returns requests 4 6
+        @returns requests 1 2
         @scrapes confederation
         """
         confederations = response.css(
@@ -33,11 +32,11 @@ class AutoSpider(scrapy.Spider):
             )
 
     def parse_confederation(self, response, confederation='europa'):
-        """Parse confederations page. From this page we collect all confederation's competitions urls
+        """Parse confederations page. From this page we collect all
+        confederation's competitions urls
 
         @url https://www.transfermarkt.co.uk/wettbewerbe/europa
-        @returns items 50 50
-        @returns requests 50 50
+        @returns requests 1 2
         @scrapes competition
         """
         # competitions entries in the confederation page
@@ -50,7 +49,7 @@ class AutoSpider(scrapy.Spider):
         valid_rows = (
             x for x in competitions if len(x.css('td')) > 1
         )
-        for competition in valid_rows :
+        for competition in valid_rows:
             url = competition.css('a::attr(href)').getall()[1]
             name = url.split('/')[-1]
 
@@ -58,24 +57,22 @@ class AutoSpider(scrapy.Spider):
             if name != 'GB1':
                 continue
 
-            yield {
-                'competition': {
-                    'name': name,
-                    'url': url,
-                    'confederation': confederation
-                }
-            }
             yield response.follow(
                 url,
                 callback=self.parse_competition,
-                cb_kwargs={'competition': name}
+                cb_kwargs={'confederation': confederation, 'competition': name}
             )
 
-    def parse_competition(self, response, competition='GB1'):
-        """Parse competition page. From this page we collect all competition's teams urls
+    def parse_competition(
+        self,
+        response,
+        confederation='europa',
+        competition='GB1'
+    ):
+        """Parse competition page. From this page we collect all competition's
+        teams urls
 
         @url https://www.transfermarkt.co.uk/premier-league/startseite/wettbewerb/GB1
-        @returns items 20 20
         @returns requests 20 20
         @scrapes team
         """
@@ -111,15 +108,24 @@ class AutoSpider(scrapy.Spider):
             yield response.follow(
                 href,
                 callback=self.parse_team,
-                cb_kwargs={'team': name}
+                cb_kwargs={
+                    'confederation': confederation,
+                    'competition': competition,
+                    'team': name
+                }
             )
 
-    def parse_team(self, response, team='manchester-city'):
+    def parse_team(
+        self,
+        response,
+        confederation='europa',
+        competition='GB1',
+        team='manchester-city'
+    ):
         """Parse team's page. From this page we collect all player's urls.
 
         @url https://www.transfermarkt.co.uk/manchester-city/kader/verein/281/saison_id/2019
-        @returns items 26 26
-        @returns requests 26 26
+        @returns requests 24 24
         @scrapes player
         """
 
@@ -127,44 +133,59 @@ class AutoSpider(scrapy.Spider):
         if team != 'manchester-city':
             return
 
-        player_hrefs = response.css('a.spielprofil_tooltip::attr(href)').getall()
+        player_hrefs = response.css(
+            'a.spielprofil_tooltip::attr(href)'
+        ).getall()
         without_duplicates = list(set(player_hrefs))
         for href in without_duplicates:
             name = href.split('/')[1]
             id = href.split('/')[-1]
-            yield {
-                'player': {
-                    'name': name,
-                    'id': id,
-                    'url': href,
-                    'team': team
-                }
-            }
             # we are interested on a player's detailed career statistics
             yield scrapy.Request(
-                url=self.base_url+name+'/leistungsdaten/spieler/'+id+'/plus/1?saison=2018',
-                callback=self.parse_player
+                url=(
+                    self.base_url +
+                    name +
+                    '/leistungsdaten/spieler/' +
+                    id +
+                    '/plus/1?saison=2018'
+                ),
+                callback=self.parse_player,
+                cb_kwargs={
+                    'confederation': confederation,
+                    'competition': competition,
+                    'team': team,
+                    'name': name
+                }
             )
 
-    def parse_player(self, response):
+    def parse_player(
+        self,
+        response,
+        confederation='europa',
+        competition='GB1',
+        team='manchester-city',
+        name='sergio-aguero'
+    ):
         """Parse player's page. From this page finally collect all player appearances
 
         @url https://www.transfermarkt.co.uk/sergio-aguero/leistungsdaten/spieler/26399/plus/1?saison=2018
-        @returns items 46 46
-        @scrapes appearance
+        @returns items 5 5
+        @scrapes stats
         """
 
         def parse_stats_table(table):
             """Parses a table of player's statistics."""
             header_elements = [
                 underscore(parameterize(header)) for header in
-                table.css("th::text").getall() + table.css("th > span::attr(title)").getall()
+                table.css("th::text").getall() + table.css(
+                    "th > span::attr(title)"
+                ).getall()
             ]
 
             value_elements_matrix = [
-                [ element.strip() for element in
-                  row.xpath('td[not(descendant::*[local-name() = "img"])]').xpath('string(.)').getall()
-                ]
+                [element.strip() for element in row.xpath(
+                    'td[not(descendant::*[local-name() = "img"])]'
+                ).xpath('string(.)').getall()]
                 for row in table.css('tr') if len(row.css('td').getall()) > 8
             ]
 
@@ -181,15 +202,18 @@ class AutoSpider(scrapy.Spider):
 
         # stats tables are 'responsive-tables' (except the first one, that is
         # a summary table)
-        competitions = response.css('div.table-header > a::attr(name)').getall()[1:]
+        competitions = response.css(
+            'div.table-header > a::attr(name)'
+        ).getall()[1:]
         stats_tables = response.css('div.responsive-table')[1:]
         assert(len(competitions) == len(stats_tables))
-        for competition, table in zip(competitions, stats_tables):
-            stats = parse_stats_table(table)
-            for appearance in stats:
-                yield {
-                    'appearance': {
-                        'stats' : appearance,
-                        'competition': competition
-                    }
-                }
+        for competition_name, table in zip(competitions, stats_tables):
+            stats = list(parse_stats_table(table))
+            yield {
+                'confederation': confederation,
+                'domestic_competition': competition,
+                'stats_competition': competition_name,
+                'current_team': team,
+                'player_name': name,
+                'stats': stats
+            }
