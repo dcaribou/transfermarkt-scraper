@@ -19,8 +19,11 @@ class AutoSpider(scrapy.Spider):
             'div.konfoederationenbox > a::attr(href)'
         ).getall()
 
-        # lets limit scrapping to 'europa' for now
-        confederations = [x for x in confederations if 'europa' in x]
+        # limit scrapping scope
+        confederations = [
+            x for x in confederations
+            if x.split('/')[-1] in self.settings.attributes['ALLOWED_TO_CRAWL'].value.keys()
+        ]
 
         for confederation in confederations:
             object = {'confederation': confederation.split('/')[-1]}
@@ -35,7 +38,7 @@ class AutoSpider(scrapy.Spider):
         confederation's competitions urls
 
         @url https://www.transfermarkt.co.uk/wettbewerbe/europa
-        @returns requests 1 2
+        @returns requests 8 16
         @scrapes competition
         """
         # competitions entries in the confederation page
@@ -52,8 +55,9 @@ class AutoSpider(scrapy.Spider):
             url = competition.css('a::attr(href)').getall()[1]
             name = url.split('/')[-1]
 
-            # let's limit scrapping to the Premier League for now
-            if name != 'GB1':
+            # limit scrapping scope
+            confederation_config = self.settings.attributes['ALLOWED_TO_CRAWL'].value[confederation]
+            if name not in confederation_config.keys():
                 continue
 
             yield response.follow(
@@ -121,10 +125,6 @@ class AutoSpider(scrapy.Spider):
         @scrapes player
         """
 
-        # limit scrapping to manchester-city for now
-        if team != 'manchester-city':
-            return
-
         player_hrefs = response.css(
             'a.spielprofil_tooltip::attr(href)'
         ).getall()
@@ -175,15 +175,26 @@ class AutoSpider(scrapy.Spider):
             ]
 
             value_elements_matrix = [
-                [element.strip() for element in row.xpath(
-                    'td[not(descendant::*[local-name() = "img"])]'
-                ).xpath('string(.)').getall()]
+                [
+                    parse_stats_elem(element).strip() for element in row.xpath(
+                        'td[not(descendant::*[local-name() = "img"])]'
+                    )
+                ]
                 for row in table.css('tr') if len(row.css('td').getall()) > 8
             ]
 
             for value_elements in value_elements_matrix:
                 assert(len(header_elements) == len(value_elements))
                 yield dict(zip(header_elements, value_elements))
+
+        def parse_stats_elem(elem):
+            """Parse an individual table cell"""
+
+            team = elem.css('a.vereinprofil_tooltip::attr(href)').get()
+            if team is not None:
+                return team.split('/')[1]
+            else:
+                return elem.xpath('string(.)').get()
 
         def is_stats_table(table):
             """Checks whether a table is expected to contain player stats or not,
