@@ -24,7 +24,6 @@ class AutoSpider(scrapy.Spider):
 
         for confederation in confederations:
             object = {'confederation': confederation.split('/')[-1]}
-            yield object
             yield response.follow(
                 confederation,
                 callback=self.parse_confederation,
@@ -98,13 +97,6 @@ class AutoSpider(scrapy.Spider):
         for row in with_teams_info[0].css('tbody tr'):
             href = extract_team_href(row)
             name = href.split('/')[1]
-            yield {
-                'team': {
-                    'name': name,
-                    'url': href,
-                    'competition': competition
-                }
-            }
             yield response.follow(
                 href,
                 callback=self.parse_team,

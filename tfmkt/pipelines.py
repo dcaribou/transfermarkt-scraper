@@ -30,9 +30,7 @@ class CleanAppearancePipeline(object):
                     value = 0
                 # most of the appearance fields are ints in a string format
                 # let's try to give them their right type
-                if key == 'substituted_on':
-                    print(type(value))
-                elif type(value) == str:
+                if type(value) == str:
                     try:
                         value = int(value)
                     except ValueError:
