@@ -1,1 +1,2 @@
 inflection
+python-dateutil
