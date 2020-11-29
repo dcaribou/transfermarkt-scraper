@@ -5,15 +5,19 @@ BOT_NAME = 'tfmkt'
 SPIDER_MODULES = ['tfmkt.spiders']
 NEWSPIDER_MODULE = 'tfmkt.spiders'
 
-BASE_URL = 'https://www.transfermarkt.co.uk/wettbewerbe'
+BASE_URL = 'https://www.transfermarkt.co.uk'
 
 # if passed, this setting will be used to limit the scope of the scraping
 # by filtering out paths from the site hierachy not defined here
 SITE_TREE_FILTER = {
+    # confederation
     '/wettbewerbe/europa': {
+        # competition
         '/premier-league/startseite/wettbewerb/GB1': {
-            '/manchester-city/kader/verein/281/saison_id/2019':
-                '/sergio-aguero/leistungsdaten/spieler/26399/plus/1?saison=2018'
+            # club
+            '/fc-liverpool/startseite/verein/31/saison_id/2020':
+                # player
+                '/diogo-jota/leistungsdaten/spieler/340950/plus/1'
         }
     },
     # 'amerika': {
@@ -28,7 +32,7 @@ SITE_TREE_FILTER = {
 }
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-USER_AGENT = 'tfmkt-scraper (https://github.com/dcaribou)'
+USER_AGENT = 'transfermarkt-scraper (https://github.com/dcaribou/transfermarkt-scraper)'
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True

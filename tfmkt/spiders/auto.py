@@ -40,7 +40,6 @@ class AutoSpider(scrapy.Spider):
             # if there is a filter defined for this confederation, and the competition url
             # does not match to that in the filter, skip
             if scope_filter and type(scope_filter.value) == dict and scope_filter.value[relative_url] and url not in scope_filter.value[relative_url].keys():
-                print('skipped')
                 continue
 
             yield response.follow(
