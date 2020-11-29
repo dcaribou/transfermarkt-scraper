@@ -1,19 +1,18 @@
-![example workflow name](https://github.com/dcaribou/transfermarkt-scraper/workflows/Scrapy%20Contracts%20%Checks/badge.svg?branch=gh-actions)
 
-## transfermarkt-scraper
+# transfermarkt-scraper  ![checks status](https://github.com/dcaribou/transfermarkt-scraper/workflows/Scrapy%20Contracts%20Checks/badge.svg?branch=gh-actions)
 
 A web scraper for collecting data from [Transfermarkt](https://www.transfermarkt.co.uk/) website. The scraper recurses into the Transfermarkt hierarchy to reach all players' [detailed performance page](https://www.transfermarkt.co.uk/diogo-jota/leistungsdatendetails/spieler/340950/saison/2020/verein/0/liga/0/wettbewerb/GB1/pos/0/trainer_id/0/plus/1), and
 extract appearances as a JSON object.
 
-### run
+## run
 This is a [`scrapy`](https://scrapy.org/) project, so it needs to be run with the
 `scrapy` command line util.
 ```console
 scrapy crawl auto
 ```
 
-### config
-The website hierarchy to recurse can be trimmed by using the configuration `SITE_TREE_FILTER`.
+## config
+The website hierarchy recursed can be trimmed by using the configuration `SITE_TREE_FILTER`.
 ```python
 # if passed, this setting will be used to limit the scope of the scraping
 # by filtering out paths from the site hierachy not defined here
@@ -34,7 +33,7 @@ SITE_TREE_FILTER = {
 }
 ```
 
-### example
+## example
 Appearances data is extracted in JSON format. One JSON object is produced per stats table in the [detailed performance page](https://www.transfermarkt.co.uk/diogo-jota/leistungsdatendetails/spieler/340950/saison/2020/verein/0/liga/0/wettbewerb/GB1/pos/0/trainer_id/0/plus/1) and printed to the `stdout`.
 ```json
 {
