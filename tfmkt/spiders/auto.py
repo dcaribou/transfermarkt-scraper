@@ -6,58 +6,41 @@ from inflection import parameterize, underscore
 class AutoSpider(scrapy.Spider):
     name = 'auto'
     base_url = 'https://www.transfermarkt.co.uk/'
-    start_urls = [base_url]
 
-    def parse(self, response):
-        """Parse Transfermarkt entrypoint page. From here we collect all confederations urls
-
-        @url https://www.transfermarkt.co.uk
-        @returns requests 1 2
-        @scrapes confederation
-        """
-        confederations = response.css(
-            'div.konfoederationenbox > a::attr(href)'
-        ).getall()
-
-        # limit scrapping scope
-        confederations = [
-            x for x in confederations
-            if x.split('/')[-1] in self.settings.attributes['ALLOWED_TO_CRAWL'].value.keys()
-        ]
-
-        for confederation in confederations:
-            object = {'confederation': confederation.split('/')[-1]}
-            yield response.follow(
-                confederation,
-                callback=self.parse_confederation,
-                cb_kwargs=object
+    def start_requests(self):
+        # keys in the root of the site tree filter must be confederation urls
+        # which are used as the starting point of the crawler
+        base_url = self.settings.attributes['BASE_URL'].value
+        relative_urls = self.settings.attributes['SITE_TREE_FILTER'].value.keys()
+        for url in relative_urls:
+            yield scrapy.Request(
+                url=f"{base_url}{url}", 
+                callback=self.parse,
+                cb_kwargs={'relative_url':url}
             )
 
-    def parse_confederation(self, response, confederation='europa'):
+    def parse(self, response, confederation='europa', relative_url='/wettbewerbe/europa'):
         """Parse confederations page. From this page we collect all
         confederation's competitions urls
 
         @url https://www.transfermarkt.co.uk/wettbewerbe/europa
-        @returns requests 8 16
+        @returns requests 25 25
         @scrapes competition
         """
         # competitions entries in the confederation page
         competitions = response.css(
-            'table.items tbody tr'
+            'table.items tbody tr:first-child a[title]::attr(href)'
         )
-        # some entries in the table contain tier information
-        # this rows have a single value, so we filter them for now by removing
-        # rows with less than 2 values
-        valid_rows = (
-            x for x in competitions if len(x.css('td')) > 1
-        )
-        for competition in valid_rows:
-            url = competition.css('a::attr(href)').getall()[1]
+        for competition in competitions:
+            url = competition.getall()[0]
             name = url.split('/')[-1]
 
             # limit scrapping scope
-            confederation_config = self.settings.attributes['ALLOWED_TO_CRAWL'].value[confederation]
-            if name not in confederation_config.keys():
+            scope_filter = self.settings.attributes.get('SITE_TREE_FILTER')
+            # if there is a filter defined for this confederation, and the competition url
+            # does not match to that in the filter, skip
+            if scope_filter and type(scope_filter.value) == dict and scope_filter.value[relative_url] and url not in scope_filter.value[relative_url].keys():
+                print('skipped')
                 continue
 
             yield response.follow(
@@ -121,10 +104,10 @@ class AutoSpider(scrapy.Spider):
         """Parse team's page. From this page we collect all player's urls.
 
         @url https://www.transfermarkt.co.uk/manchester-city/kader/verein/281/saison_id/2019
-        @returns requests 24 24
+        @returns requests 34 34
         @scrapes player
         """
-
+        
         player_hrefs = response.css(
             'a.spielprofil_tooltip::attr(href)'
         ).getall()
