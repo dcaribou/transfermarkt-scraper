@@ -1,5 +1,5 @@
 
-# transfermarkt-scraper  ![checks status](https://github.com/dcaribou/transfermarkt-scraper/workflows/Scrapy%20Contracts%20Checks/badge.svg?branch=gh-actions)
+# transfermarkt-scraper  ![checks status](https://github.com/dcaribou/transfermarkt-scraper/workflows/Scrapy%20Contracts%20Checks/badge.svg)
 
 A web scraper for collecting data from [Transfermarkt](https://www.transfermarkt.co.uk/) website. The scraper recurses into the Transfermarkt hierarchy to reach all players' [detailed performance page](https://www.transfermarkt.co.uk/diogo-jota/leistungsdatendetails/spieler/340950/saison/2020/verein/0/liga/0/wettbewerb/GB1/pos/0/trainer_id/0/plus/1), and
 extract appearances as a JSON object.

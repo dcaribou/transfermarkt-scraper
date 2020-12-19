@@ -66,7 +66,7 @@ class AutoSpider(scrapy.Spider):
             """Checks whether a table is expected to contain teams information
             or not, by looking for the word 'Club' in the table headers.
             """
-            return True if table.css('th::text')[0].get() == 'Club' else False
+            return True if table.css('th::text')[0].get().lower() == 'club' else False
 
         def extract_team_href(row):
             """It extracts one team's href from a teams' table row"""
