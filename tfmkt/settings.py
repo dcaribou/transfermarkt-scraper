@@ -20,9 +20,10 @@ SITE_MAP = {
         # competition
         '/premier-league/startseite/wettbewerb/GB1': {
             # club
-            '/fc-liverpool/startseite/verein/31/saison_id/2020':
+            '/fc-liverpool/startseite/verein/31/saison_id/2020': [
                 # player
                 '/diogo-jota/leistungsdaten/spieler/340950/plus/1'
+            ]
         }
     },
     # 'amerika': {

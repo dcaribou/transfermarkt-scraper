@@ -15,7 +15,7 @@ class PlayerSpider(scrapy.Spider):
         confederation_url='europa',
         competition_url='GB1',
         team_url='/manchester-city/startseite/verein/281/saison_id/2020',
-        player_url='sergio-aguero/leistungsdaten/spieler/26399/plus/1?saison=2018'
+        player_url='/sergio-aguero/leistungsdaten/spieler/26399/plus/1?saison=2018'
     ):
         """Parse player's page. From this page finally collect all player appearances
 
@@ -198,7 +198,7 @@ class AutoSpider(PlayerSpider):
             name = href.split('/')[1]
             id = href.split('/')[-1]
             # we are interested on a player's detailed career statistics
-            relative_url = name + '/leistungsdaten/spieler/' + id + '/plus/1?saison=2018'
+            relative_url = '/' + name + '/leistungsdaten/spieler/' + id + '/plus/1?saison=2018'
 
             yield scrapy.Request(
                 url=(
@@ -270,7 +270,7 @@ class PartialSpider(PlayerSpider):
                 for team_url, player_urls in team_urls.items():
                     for player_url in player_urls:
                         yield scrapy.Request(
-                            url=f"{base_url}/{player_url}",
+                            url=f"{base_url}{player_url}",
                             callback=self.parse_player,
                             cb_kwargs={
                                 'confederation_url': confederation_url,

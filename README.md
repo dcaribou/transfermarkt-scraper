@@ -36,9 +36,10 @@ SITE_MAP = {
         # competition
         '/premier-league/startseite/wettbewerb/GB1': {
             # club
-            '/fc-liverpool/startseite/verein/31/saison_id/2020':
+            '/fc-liverpool/startseite/verein/31/saison_id/2020': [
                 # player
                 '/diogo-jota/leistungsdaten/spieler/340950/plus/1'
+            ]
         }
     },
     # '/wettbewerbe/amerika': {},
@@ -51,46 +52,18 @@ SITE_MAP = {
 Appearances data is extracted in JSON format. One JSON object is produced per stats table in the [detailed performance page](https://www.transfermarkt.co.uk/diogo-jota/leistungsdatendetails/spieler/340950/saison/2020/verein/0/liga/0/wettbewerb/GB1/pos/0/trainer_id/0/plus/1) and printed to the `stdout`.
 ```json
 {
-    "confederation": "europa",
+    "confederation":"europa",
     "domestic_competition": "GB1",
-    "stats_competition": "FAC",
+    "stats_competition": "CL", 
     "current_team": "fc-liverpool",
     "player_name": "diogo-jota",
     "stats": [
-        {
-            "matchday": "Third Round",
-            "date": "2019-01-07",
-            "home_team": "wolverhampton-wanderers",
-            "away_team": "fc-liverpool",
-            "result": "2:1",
-            "pos": "CF",
-            "goals": 0,
-            "assists": "1",
-            "own_goals": 0,
-            "yellow_cards": 0,
-            "second_yellow_cards": 0,
-            "red_cards": 0,
-            "substitutions_on": 0,
-            "substitutions_off": "52'",
-            "minutes_played": 52
-        },
-        {
-            "matchday": "Sixth Round",
-            "date": "2019-03-16",
-            "home_team": "wolverhampton-wanderers",
-            "away_team": "manchester-united",
-            "result": "2:1",
-            "pos": "CF",
-            "goals": "1",
-            "assists": 0,
-            "own_goals": 0,
-            "yellow_cards": 0,
-            "second_yellow_cards": 0,
-            "red_cards": 0,
-            "substitutions_on": 0,
-            "substitutions_off": "87'",
-            "minutes_played": 87
-        }
+        {"matchday": "Group D", "date": "2020-10-21", "home_team": "ajax-amsterdam", "away_team": "fc-liverpool", "result": "0:1", "pos": "LW", "goals": 0, "assists": 0, "own_goals": 0, "yellow_cards": 0, "second_yellow_cards": 0, "red_cards": 0, "substitutions_on": "60'", "substitutions_off": 0, "minutes_played": 30},
+        {"matchday": "Group D", "date": "2020-10-27", "home_team": "fc-liverpool", "away_team": "fc-midtjylland", "result": "2:0", "pos": "RW", "goals": "1", "assists": 0, "own_goals": 0, "yellow_cards": 0, "second_yellow_cards": 0, "red_cards": 0, "substitutions_on": 0, "substitutions_off": "81'", "minutes_played": 81},
+        {"matchday": "Group D", "date": "2020-11-03", "home_team": "atalanta-bergamo", "away_team": "fc-liverpool", "result": "0:5", "pos": "CF", "goals": "3", "assists": 0, "own_goals": 0, "yellow_cards": 0, "second_yellow_cards": 0, "red_cards": 0, "substitutions_on": 0, "substitutions_off": "65'", "minutes_played": 65},
+        {"matchday": "Group D", "date": "2020-11-25", "home_team": "fc-liverpool", "away_team": "atalanta-bergamo", "result": "0:2", "pos": 0, "goals": 0, "assists": 0, "own_goals": 0, "yellow_cards": 0, "second_yellow_cards": 0, "red_cards": 0, "substitutions_on": "61'", "substitutions_off": 0, "minutes_played": 29},
+        {"matchday": "Group D", "date": "2020-12-01", "home_team": "fc-liverpool", "away_team": "ajax-amsterdam", "result": "1:0", "pos": "CF", "goals": 0, "assists": 0, "own_goals": 0, "yellow_cards": 0, "second_yellow_cards": 0, "red_cards": 0, "substitutions_on": 0, "substitutions_off": "68'", "minutes_played": 68},
+        {"matchday": "Group D", "date": "2020-12-09", "home_team": "fc-midtjylland", "away_team": "fc-liverpool", "result": "1:1", "pos": "LW", "goals": 0, "assists": 0, "own_goals": 0, "yellow_cards": 0, "second_yellow_cards": 0, "red_cards": 0, "substitutions_on": 0, "substitutions_off": "87'", "minutes_played": 87}
     ]
 }
 ```
