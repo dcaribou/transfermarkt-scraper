@@ -15,9 +15,9 @@ scrapy crawl auto
 > :warning: The `auto` spider scrapes the whole website hierarchy and therefore it can take quite some time to run. Check the `partial` spider for scoped website scrapping.
 ### partial
 The `partial` spider uses a `SITE_MAP` setting to define the scrapping scope. The `SITE_MAP` 
-is a JSON representation of the site hierarchy that can be generated a single time by running
+is a dict representation of the site hierarchy that can be generated a single time by running
 ```console
-scrapy crawl mapper > site_map.json
+scrapy crawl mapper > tfmkt/site_map.py
 ```
 By using this site map generated with the `mapper` crawler above, a `SITE_MAP` setting can be populated now in the [settings.py](tfmkt/settings.py) to do partial scraping with
 ```console
