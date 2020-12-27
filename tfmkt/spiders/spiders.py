@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from re import template
 from urllib import parse
 import scrapy
 from scrapy.shell import inspect_response # required for debugging
@@ -7,7 +8,7 @@ import json
 
 class PlayerSpider(scrapy.Spider):
     name = 'player'
-    base_url = 'https://www.transfermarkt.co.uk/'
+    base_url = 'https://www.transfermarkt.co.uk'
 
     def parse_player(
         self,
@@ -189,7 +190,7 @@ class AutoSpider(PlayerSpider):
         @returns requests 34 34
         @scrapes player
         """
-        
+
         player_hrefs = response.css(
             'a.spielprofil_tooltip::attr(href)'
         ).getall()
@@ -199,7 +200,6 @@ class AutoSpider(PlayerSpider):
             id = href.split('/')[-1]
             # we are interested on a player's detailed career statistics
             relative_url = '/' + name + '/leistungsdaten/spieler/' + id + '/plus/1?saison=2018'
-
             yield scrapy.Request(
                 url=(
                     self.base_url +
@@ -222,7 +222,7 @@ class MapperSpider(AutoSpider):
     """
     name = 'mapper'
 
-    def parse(self, response, confederation_url='/wettbewerbe/europa'):
+    def parse(self, response, confederation_url):
         # record url to the site map
         self.site_map.update({confederation_url: {}})
         return super().parse(response, confederation_url)
@@ -247,11 +247,18 @@ class MapperSpider(AutoSpider):
         self.site_map[confederation_url][competition_url][team_url].append(
             player_url
         )
-        return super().parse_player(response, confederation_url=confederation_url, competition_url=competition_url, team_url=team_url, player_url=player_url)
+        pass
 
     @staticmethod
     def close(spider, reason):
-        print(json.dumps(spider.site_map, indent=4, sort_keys=True))
+        js_site_map = json.dumps(spider.site_map, indent=4, sort_keys=True)
+        printable = f"""
+# generate a site map by running
+# >>> scrapy crawl map
+
+site_map = {js_site_map}
+"""
+        print(printable)
 
 class PartialSpider(PlayerSpider):
     """
