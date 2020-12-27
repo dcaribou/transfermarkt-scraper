@@ -6,9 +6,26 @@ from scrapy.shell import inspect_response # required for debugging
 from inflection import parameterize, underscore
 import json
 
-class PlayerSpider(scrapy.Spider):
-    name = 'player'
+class BaseSpider(scrapy.Spider):
+    name = 'base'
     base_url = 'https://www.transfermarkt.co.uk'
+
+    def __init__(self, site_map_file=None):
+
+        site_map ={
+            '/wettbewerbe/europa': {},
+            '/wettbewerbe/amerika': {},
+            '/wettbewerbe/asien': {},
+            '/wettbewerbe/afrika': {}
+        }
+
+        # if a site map file is provided set it in the scraper context
+        if site_map_file is not None:
+            with open(site_map_file) as json_file:
+                site_map = json.load(json_file)
+
+        self.site_map = site_map
+        super().__init__()
 
     def parse_player(
         self,
@@ -75,22 +92,18 @@ class PlayerSpider(scrapy.Spider):
             }
 
 
-class AutoSpider(PlayerSpider):
+class AutoSpider(BaseSpider):
     """
     Recurse into transfermarkt website to reach player statistics page and extract
     data as JSON objects
     """
     name = 'auto'
     
-    def __init__(self):
-        self.site_map = {}
-        super().__init__()
-    
     def start_requests(self):
         # keys in the root of the site tree filter must be confederation urls
         # which are used as the starting point of the crawler
         base_url = self.settings.attributes['BASE_URL'].value
-        relative_urls = self.settings.attributes['SITE_MAP'].value.keys()
+        relative_urls = self.site_map.keys()
         for url in relative_urls:
             # follow request
             yield scrapy.Request(
@@ -116,10 +129,11 @@ class AutoSpider(PlayerSpider):
             url = competition.getall()[0]
             
             # limit scrapping scope
-            scope_filter = self.settings.attributes.get('SITE_MAP')
+            scope_filter = self.site_map.get(confederation_url, None)
+
             # if there is a filter defined for this confederation, and the competition url
             # does not match to that in the filter, skip
-            if scope_filter and type(scope_filter.value) == dict and scope_filter.value[confederation_url] and url not in scope_filter.value[confederation_url].keys():
+            if scope_filter and url not in scope_filter.keys():
                 continue
 
             yield response.follow(
@@ -191,6 +205,8 @@ class AutoSpider(PlayerSpider):
         @scrapes player
         """
 
+        season = self.settings.attributes['SEASON'].value
+
         player_hrefs = response.css(
             'a.spielprofil_tooltip::attr(href)'
         ).getall()
@@ -199,7 +215,11 @@ class AutoSpider(PlayerSpider):
             name = href.split('/')[1]
             id = href.split('/')[-1]
             # we are interested on a player's detailed career statistics
-            relative_url = '/' + name + '/leistungsdaten/spieler/' + id + '/plus/1?saison=2018'
+            if season is not None:
+                relative_url = f"/{name}/leistungsdaten/spieler/{id}/plus/1?saison={season}"
+            else:
+                relative_url = f"/{name}/leistungsdaten/spieler/{id}/plus/1"
+
             yield scrapy.Request(
                 url=(
                     self.base_url +
@@ -222,9 +242,14 @@ class MapperSpider(AutoSpider):
     """
     name = 'mapper'
 
+    def __init__(self, site_map_file=None):
+        self.site_map = {}
+        super().__init__(site_map_file)
+
     def parse(self, response, confederation_url):
         # record url to the site map
-        self.site_map.update({confederation_url: {}})
+        if self.site_map.get(confederation_url) is None:
+            self.site_map.update[confederation_url] = {}
         return super().parse(response, confederation_url)
 
     def parse_competition(self, response, confederation_url, competition_url):
@@ -240,39 +265,31 @@ class MapperSpider(AutoSpider):
         site_map_teams = self.site_map[confederation_url][competition_url]
         site_map_teams.update({team_url: []})
         self.site_map[confederation_url][competition_url] = site_map_teams
-
-        return super().parse_team(response, confederation_url=confederation_url, competition_url=competition_url, team_url=team_url)
+        for player_request in super().parse_team(response, confederation_url=confederation_url, competition_url=competition_url, team_url=team_url):
+            self.site_map[confederation_url][competition_url][team_url].append(
+                player_request.cb_kwargs['player_url']
+            )
+        pass
     
     def parse_player(self, response, confederation_url, competition_url, team_url, player_url):
-        self.site_map[confederation_url][competition_url][team_url].append(
-            player_url
-        )
         pass
 
     @staticmethod
     def close(spider, reason):
         js_site_map = json.dumps(spider.site_map, indent=4, sort_keys=True)
-        printable = f"""
-# generate a site map by running
-# >>> scrapy crawl map
+        print(js_site_map)
 
-site_map = {js_site_map}
-"""
-        print(printable)
-
-class PartialSpider(PlayerSpider):
+class PartialSpider(BaseSpider):
     """
-    Takes a site representation dict from the SITE_MAP setting and scrapes player statistics
-    for that tree.
+    Takes a site representation file and scrapes player statistics for that hierarchy.
     """
     name = 'partial'
 
     def start_requests(self):
 
         base_url = self.settings.attributes['BASE_URL'].value
-        site_tree = self.settings.attributes['SITE_MAP'].value
 
-        for confederation_url, competition_urls in site_tree.items():
+        for confederation_url, competition_urls in self.site_map.items():
             for competition_url, team_urls in competition_urls.items():
                 for team_url, player_urls in team_urls.items():
                     for player_url in player_urls:
