@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from tfmkt.site_map import site_map
 
 BOT_NAME = 'tfmkt'
 
@@ -9,7 +10,11 @@ BASE_URL = 'https://www.transfermarkt.co.uk'
 
 # if passed, this setting will be used to limit the scope of the scraping
 # by filtering out paths from the site hierachy not defined here
-SITE_TREE_FILTER = {
+
+# to use the automatically generated site map from site_map.py
+# SITE_MAP = site_map
+
+SITE_MAP = {
     # confederation
     '/wettbewerbe/europa': {
         # competition
