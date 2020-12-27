@@ -8,18 +8,19 @@ extract appearances as JSON objects.
 This is a [`scrapy`](https://scrapy.org/) project, so it needs to be run with the
 `scrapy` command line util.
 ### auto
-> :warning: The `auto` spider scrapes the whole website hierarchy and therefore it will take quite some time to complete. Check the `partial` spider for scoped website scrapping.
 The `auto` spider recurses the Transfermarkt website hierarchy automatically for all reachable players. It can be invoked with the command
 ```console
 cd transfermarkt-scraper
 scrapy crawl auto
 ```
+> :warning: The `auto` spider scrapes the whole website hierarchy and therefore it will take quite some time to complete. Check the `partial` spider for scoped website scrapping.
+> 
 ### partial
 The `partial` spider uses a [site map file](sample_site_maps) to define the scrapping scope. The site map is a JSON representation of the site hierarchy that can be generated a single time by running
 ```console
 scrapy crawl mapper > site_map.json
 ```
-The `partial` spider can do scoped scraping now by using file generated with the `mapper` crawler above
+The `partial` spider can do scoped scraping now by using the file generated with the `mapper` crawler above
 ```console
 scrapy crawl partial -a site_map_file=site_map.json
 ```
