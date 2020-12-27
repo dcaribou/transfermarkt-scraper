@@ -2,7 +2,7 @@
 # transfermarkt-scraper  ![checks status](https://github.com/dcaribou/transfermarkt-scraper/workflows/Scrapy%20Contracts%20Checks/badge.svg)
 
 A web scraper for collecting data from [Transfermarkt](https://www.transfermarkt.co.uk/) website. The scraper recurses into the Transfermarkt hierarchy to reach all players' [detailed performance page](https://www.transfermarkt.co.uk/diogo-jota/leistungsdatendetails/spieler/340950/saison/2020/verein/0/liga/0/wettbewerb/GB1/pos/0/trainer_id/0/plus/1), and
-extract appearances as a JSON object.
+extract appearances as JSON objects.
 
 ## run
 This is a [`scrapy`](https://scrapy.org/) project, so it needs to be run with the
@@ -10,43 +10,24 @@ This is a [`scrapy`](https://scrapy.org/) project, so it needs to be run with th
 ### auto
 The `auto` spider recurses the Transfermarkt website hierarchy automatically for all reachable players. It can be invoked with the command
 ```console
+cd transfermarkt-scraper
 scrapy crawl auto
 ```
-> :warning: The `auto` spider scrapes the whole website hierarchy and therefore it can take quite some time to run. Check the `partial` spider for scoped website scrapping.
+> :warning: The `auto` spider scrapes the whole website hierarchy and therefore it will take quite some time to complete. Check the `partial` spider for scoped website scrapping.
+> 
 ### partial
-The `partial` spider uses a `SITE_MAP` setting to define the scrapping scope. The `SITE_MAP` 
-is a dict representation of the site hierarchy that can be generated a single time by running
+The `partial` spider uses a [site map file](sample_site_maps) to define the scrapping scope. The site map is a JSON representation of the site hierarchy that can be generated a single time by running
 ```console
-scrapy crawl mapper > tfmkt/site_map.py
+scrapy crawl mapper > site_map.json
 ```
-By using this site map generated with the `mapper` crawler above, a `SITE_MAP` setting can be populated now in the [settings.py](tfmkt/settings.py) to do partial scraping with
+The `partial` spider can do scoped scraping now by using the file generated with the `mapper` crawler above
 ```console
-scrapy crawl partial
+scrapy crawl partial -a site_map_file=site_map.json
 ```
-In [this example](tfmkt/site_map.py), a `SITE_MAP` is provided that can be used to scrape player statistics from Premier League's Aston Vila. Additional Premier League clubs can be commented out from the site map in order to have those scraped as well.
+Some sample site map files are provided in [`sample_site_maps`](sample_site_maps).
 
 ## config
-The website hierarchy recursed can be trimmed by using the configuration `SITE_MAP`.
-```python
-# if passed, this setting will be used to limit the scope of the scraping
-# by filtering out paths from the site hierachy that are not defined here
-SITE_MAP = {
-    # confederation
-    '/wettbewerbe/europa': {
-        # competition
-        '/premier-league/startseite/wettbewerb/GB1': {
-            # club
-            '/fc-liverpool/startseite/verein/31/saison_id/2020': [
-                # player
-                '/diogo-jota/leistungsdaten/spieler/340950/plus/1'
-            ]
-        }
-    },
-    # '/wettbewerbe/amerika': {},
-    # '/wettbewerbe/asien': {},
-    # '/wettbewerbe/afrika': {}
-}
-```
+Check [setting.py](tfmkt/settings.py) for a reference of available configuration options
 
 ## example
 Appearances data is extracted in JSON format. One JSON object is produced per stats table in the [detailed performance page](https://www.transfermarkt.co.uk/diogo-jota/leistungsdatendetails/spieler/340950/saison/2020/verein/0/liga/0/wettbewerb/GB1/pos/0/trainer_id/0/plus/1) and printed to the `stdout`.
