@@ -1,6 +1,6 @@
 
 ![checks status](https://github.com/dcaribou/transfermarkt-scraper/workflows/Scrapy%20Contracts%20Checks/badge.svg)
-
+![docker build status](https://github.com/dcaribou/transfermarkt-scraper/workflows/Dockerhub%20Image/badge.svg)
 # transfermarkt-scraper
 
 A web scraper for collecting data from [Transfermarkt](https://www.transfermarkt.co.uk/) website. The scraper recurses into the Transfermarkt hierarchy to reach all players' [detailed performance page](https://www.transfermarkt.co.uk/diogo-jota/leistungsdatendetails/spieler/340950/saison/2020/verein/0/liga/0/wettbewerb/GB1/pos/0/trainer_id/0/plus/1), and
@@ -15,9 +15,12 @@ conda env create -f environment.yml
 conda activate transfermarkt-scraper
 scrapy crawl partial -a site_map_file=sample_site_maps/ES1_athletic_bilbao_only.json
 ```
-Alternatively use `dcaribou/transfermarkt-scraper` image from dockerhub
+Alternatively you can use [`dcaribou/transfermarkt-scraper`](https://hub.docker.com/repository/docker/dcaribou/transfermarkt-scraper) image from dockerhub
 ```console
-docker run -v "$(pwd)"/sample_site_maps:/app/sample_site_maps -ti dcaribou/transfermarkt-scraper crawl partial -a site_map_file=sample_site_maps/ES1_athletic_bilbao_only.json
+docker run \
+    -ti dcaribou/transfermarkt-scraper \
+    -v "$(pwd)"/sample_site_maps:/app/sample_site_maps \
+    scrapy crawl partial -a site_map_file=sample_site_maps/ES1_athletic_bilbao_only.json
 ```
 ### auto
 The `auto` spider recurses the Transfermarkt website hierarchy automatically for all reachable players. It can be invoked with the command
