@@ -8,8 +8,10 @@ on:
     branches: [ main ]
 
 jobs:
-  main:
+  docker-build:
+
     runs-on: ubuntu-latest
+
     steps:
       -
         name: Set up Docker Buildx

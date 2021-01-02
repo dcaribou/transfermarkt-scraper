@@ -12,7 +12,7 @@ on:
     - cron: '0 4 * * FRI'
 
 jobs:
-  build:
+  scrapy-checks:
 
     runs-on: ubuntu-latest
 
