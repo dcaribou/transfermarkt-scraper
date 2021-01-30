@@ -5,7 +5,7 @@ name: Dockerhub Image
 
 on:
   push:
-    branches: [ semver ]
+    branches: [ main ]
 
 jobs:
   docker-build:
