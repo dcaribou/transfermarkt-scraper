@@ -6,7 +6,9 @@ name: Dockerhub Image
 on:
   push:
     branches: [ main ]
-
+    tags:
+      - 'v*.*.*'
+      
 jobs:
   docker-build:
 
