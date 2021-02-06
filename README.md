@@ -3,11 +3,12 @@
 ![docker build status](https://github.com/dcaribou/transfermarkt-scraper/workflows/Dockerhub%20Image/badge.svg)
 # transfermarkt-scraper
 
-A web scraper for collecting data from [Transfermarkt](https://www.transfermarkt.co.uk/) website. It recurses into the Transfermarkt hierarchy to find leagues, clubs, players and [appearances satistics](https://www.transfermarkt.co.uk/diogo-jota/leistungsdatendetails/spieler/340950/saison/2020/verein/0/liga/0/wettbewerb/GB1/pos/0/trainer_id/0/plus/1), and extracts them as JSON objects.
+A web scraper for collecting data from [Transfermarkt](https://www.transfermarkt.co.uk/) website. It recurses into the Transfermarkt hierarchy to find leagues, clubs, players and [appearances satistics](https://www.transfermarkt.co.uk/diogo-jota/leistungsdatendetails/spieler/340950/saison/2020/verein/0/liga/0/wettbewerb/GB1/pos/0/trainer_id/0/plus/1), and extracts them as JSON objects. 
+
 
 `(root) |> Confederations |> Leagues |> Clubs |> (Players, Games) |> Appearances`
 
-The scraper can be used to discover and refresh these entities separately.
+The scraper can be used to discover and refresh each one of these entities separately.
 
 ## run
 This is a [scrapy](https://scrapy.org/) project, so it needs to be run with the
@@ -30,9 +31,9 @@ Alternatively you can also use [`dcaribou/transfermarkt-scraper`](https://hub.do
 
 ```console
 docker run \
-    -ti dcaribou/transfermarkt-scraper \
-    -v "$(pwd)"/.:/app \
-    scrapy confederation -a parents=confederations.json
+    -ti -v "$(pwd)"/.:/app \
+    dcaribou/transfermarkt-scraper \
+    scrapy crawl confederations -a parents=samples/confederations.json
 ```
 Items are extracted in JSON format. One JSON object is produced per item table and printed to the `stdout`. Samples of extracted data are provided in the [samples](samples) folder.
 
