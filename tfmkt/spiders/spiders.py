@@ -3,6 +3,7 @@ from scrapy import Request
 from scrapy.shell import inspect_response # required for debugging
 from inflection import parameterize, underscore
 import json
+import os
 
 default_base_url = 'https://www.transfermarkt.co.uk'
 
@@ -14,13 +15,32 @@ default_confederation_hrefs = [
 ]
 
 class BaseSpider(scrapy.Spider):
-  def __init__(self, base_url=None):
+  def __init__(self, base_url=None, parents=None):
 
-    # set argument defaults
     if base_url is not None:
       self.base_url = base_url
     else:
       self.base_url = default_base_url
+    
+    if parents is not None:
+      with open(parents) as json_file:
+        lines = json_file.readlines()
+        parents = [ json.loads(line) for line in lines ]
+    else:
+      parents = self.scrape_parents()
+
+    # 2nd level parents are redundat
+    for parent in parents:
+      if parent.get('parent') is not None:
+        del parent['parent']
+
+    self.entrypoints = parents
+
+  def scrape_parents(self):
+    if not os.environ.get('SCRAPY_CHECK'):
+      raise Exception("Backfilling is not yet supported, please provide a 'parents' file")
+    else:
+      return []
 
   def start_requests(self):
     return [
@@ -37,9 +57,8 @@ class BaseSpider(scrapy.Spider):
 class ConfederationsSpider(BaseSpider):
     name = 'confederations'
 
-    def __init__(self, base_url=None):
-        self.entrypoints = [ {'type': 'root', 'href': ""} ]
-        super().__init__(base_url)
+    def scrape_parents(self):
+      return [ {'type': 'root', 'href': ""} ]
 
     def parse(self, response, **kwargs):
       for href in default_confederation_hrefs:
@@ -48,33 +67,16 @@ class ConfederationsSpider(BaseSpider):
 class LeaguesSpider(BaseSpider):
   name = 'leagues'
 
-  def __init__(self, base_url=None, confederations=None):
-
-      # set argument defaults
-
-      if confederations is not None:
-        with open(confederations) as json_file:
-          lines = json_file.readlines()
-          hrefs = [ json.loads(line)['href'] for line in lines  ]
-      else:
-        hrefs = default_confederation_hrefs
-
-      self.entrypoints = [
-        {'type': 'confederation', 'href': href}
-        for href in hrefs
-      ]
-
-      super().__init__(base_url)
-
   def parse(self, response, parent):
     """Parse confederations page. From this page we collect all
     confederation's leagues urls
 
     @url https://www.transfermarkt.co.uk/wettbewerbe/europa
-    @returns requests 25 25
-    @scrapes competition
+    @returns items 25 25
+    @cb_kwargs {"parent": "dummy"}
+    @scrapes type href parent
     """
-    # competitions entries in the confederation page
+    # league entries in the confederation page
     leagues_query = response.css(
         'table.items tbody tr:first-child a[title]::attr(href)'
     )
@@ -85,37 +87,14 @@ class LeaguesSpider(BaseSpider):
 class ClubsSpider(BaseSpider):
   name = 'clubs'
 
-  def __init__(self, base_url=None, confederations=None, leagues=None):
-
-      # set argument defaults
-
-      if leagues is not None:
-        with open(leagues) as json_file:
-          lines = json_file.readlines()
-          hrefs = [ json.loads(line)['href'] for line in lines  ]
-      else:
-        hrefs = self.scrape_leagues(base_url, confederations)['href']
-
-      self.entrypoints = [
-        {'type': 'league', 'href': href}
-        for href in hrefs
-      ]
-
-      super().__init__(base_url)
-
-  def scrape_leagues(self, base_url, confederations):
-    # ideally we would crawl 'leagues' at this point and pass the results to the clubs
-    # spider to continue, however this is not yet implemented
-    raise Exception("League URLs backfilling is not yet supported, please provide a 'leagues' file")
-
-
   def parse(self, response, parent):
     """Parse competition page. From this page we collect all competition's
     teams urls
 
     @url https://www.transfermarkt.co.uk/premier-league/startseite/wettbewerb/GB1
-    @returns requests 20 20
-    @scrapes team
+    @returns items 20 20
+    @cb_kwargs {"parent": "dummy"}
+    @scrapes type href parent
     """
 
     def is_teams_table(table):
@@ -147,37 +126,13 @@ class ClubsSpider(BaseSpider):
 class PlayersSpider(BaseSpider):
   name = 'players'
 
-  def __init__(self, base_url=None, leagues=None, clubs=None):
-
-      # set argument defaults
-
-      if clubs is not None:
-        with open(clubs) as json_file:
-          lines = json_file.readlines()
-          hrefs = [ json.loads(line)['href'] for line in lines  ]
-      else:
-        hrefs = self.scrape_clubs(base_url, leagues)['href']
-
-      self.entrypoints = [
-        {'type': 'club', 'href': href}
-        for href in hrefs
-      ]
-
-      super().__init__(base_url)
-
-
-  def scrape_clubs(self, base_url, leagues):
-    # ideally we would crawl 'leagues' at this point and pass the results to the clubs
-    # spider to continue, however this is not yet implemented
-    raise Exception("Club URLs backfilling is not yet supported, please provide a 'clubs' file")
-
-
   def parse(self, response, parent):
       """Parse clubs's page to collect all player's urls.
 
         @url https://www.transfermarkt.co.uk/manchester-city/kader/verein/281/saison_id/2019
-        @returns requests 34 34
-        @scrapes player
+        @returns items 34 34
+        @cb_kwargs {"parent": "dummy"}
+        @scrapes type href parent
       """
 
       player_hrefs = response.css(
@@ -195,24 +150,6 @@ class PlayersSpider(BaseSpider):
 
 class AppearancesSpider(BaseSpider):
   name = 'appearances'
-
-  def __init__(self, base_url=None, players=None):
-
-    # set argument defaults
-
-    if players is not None:
-      with open(players) as json_file:
-        lines = json_file.readlines()
-        hrefs = [ json.loads(line)['href'] for line in lines  ]
-    else:
-      hrefs = self.scrape_players(base_url, players)['href']
-
-    self.entrypoints = [
-      {'type': 'player', 'href': href}
-      for href in hrefs
-    ]
-
-    super().__init__(base_url)
 
   def parse(self, response, parent):
     full_stats_href = response.xpath('//a[contains(text(),"View full stats")]/@href').get()
