@@ -4,6 +4,7 @@ from scrapy.shell import inspect_response # required for debugging
 from inflection import parameterize, underscore
 import json
 import os
+import sys
 
 default_base_url = 'https://www.transfermarkt.co.uk'
 
@@ -26,6 +27,8 @@ class BaseSpider(scrapy.Spider):
       with open(parents) as json_file:
         lines = json_file.readlines()
         parents = [ json.loads(line) for line in lines ]
+    elif not sys.stdin.isatty():
+        parents = [ json.loads(line) for line in sys.stdin ]
     else:
       parents = self.scrape_parents()
 
