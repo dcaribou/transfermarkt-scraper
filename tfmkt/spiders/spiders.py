@@ -1,6 +1,7 @@
 import scrapy
 from scrapy import Request
 from scrapy.shell import inspect_response # required for debugging
+from urllib.parse import urlparse
 from inflection import parameterize, underscore
 import json
 import os
@@ -155,11 +156,25 @@ class AppearancesSpider(BaseSpider):
   name = 'appearances'
 
   def parse(self, response, parent):
+    """Parse player profile attributes and fetch "full stats" URL
+
+    @url https://www.transfermarkt.co.uk/sergio-aguero/profil/spieler/26399
+    @returns requests 1 1
+    @cb_kwargs {"parent": "dummy"}
+    """
+
     full_stats_href = response.xpath('//a[contains(text(),"View full stats")]/@href').get()
-    yield response.follow(full_stats_href + '/plus/1', self.parse_stats, cb_kwargs={'parent': parent})
+    yield response.follow(full_stats_href, self.parse_stats, cb_kwargs={'parent': parent})
 
   def parse_stats(self, response, parent):
-      
+    """Parse player's full stats. From this page we collect all player appearances
+
+    @url https://www.transfermarkt.co.uk/sergio-aguero/leistungsdaten/spieler/26399
+    @returns items 1 1
+    @cb_kwargs {"parent": "dummy"}
+    @scrapes stats parent
+    """
+
     def parse_stats_table(table):
         """Parses a table of player's statistics."""
         header_elements = [
@@ -170,12 +185,8 @@ class AppearancesSpider(BaseSpider):
         ]
 
         value_elements_matrix = [
-            [
-                parse_stats_elem(element).strip() for element in row.xpath(
-                    'td[not(descendant::*[local-name() = "img"])]'
-                )
-            ]
-            for row in table.css('tr') if len(row.css('td').getall()) > 8
+          [ parse_stats_elem(element) for element in row.xpath('td') if parse_stats_elem(element) is not None
+          ] for row in table.css('tr') if len(row.css('td').getall()) > 9 # TODO: find a way to include 'on the bench' and 'not in squad' occurrences
         ]
 
         for value_elements in value_elements_matrix:
@@ -184,12 +195,22 @@ class AppearancesSpider(BaseSpider):
 
     def parse_stats_elem(elem):
         """Parse an individual table cell"""
+        # some cells include the club classification in the national league in brackets. for example, "Leeds (10.)"
+        # these are at the same time unncessary and annoying to parse, as club information can be obtained
+        # from the "shield" image. identify these cells by looking for descendents of the class 'tabellenplatz'
+        has_classification_in_brackets = elem.xpath('*[@class = "tabellenplatz"]').get() is not None
+        # club information is parsed from team "shields" using a separate logic from the rest
+        # identify cells containing club shields
+        has_shield_class = elem.css('img.tiny_wappen').get() is not None
+        club_href = elem.css('a.vereinprofil_tooltip::attr(href)').get()
 
-        team = elem.css('a.vereinprofil_tooltip::attr(href)').get()
-        if team is not None:
-            return team.split('/')[1]
+        if has_classification_in_brackets or (club_href is not None and not has_shield_class):
+          return None
+        elif club_href is not None:
+          return {'type': 'club', 'href': club_href}
+        # finally, most columns can be parsed by extracting the text at the element's "last leaf"
         else:
-            return elem.xpath('string(.)').get()
+          return elem.xpath('string(.)').get().strip()
 
     # stats tables are 'responsive-tables' (except the first one, which is
     # a summary table)
@@ -202,7 +223,14 @@ class AppearancesSpider(BaseSpider):
     for competition_name, table in zip(competitions, stats_tables):
       stats = list(parse_stats_table(table))
       all_stats[competition_name] = stats
-    yield {
-      'stats': all_stats,
-      'parent': parent
-    }
+
+    url = urlparse(response.url).path
+    for competition_name, appearances in all_stats.items():
+      for appearance in appearances:
+        yield {
+          'type': 'appearance',
+          'href': url,
+          'parent': parent,
+          'competition_code': competition_name,
+          **appearance
+        }

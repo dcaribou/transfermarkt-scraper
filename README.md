@@ -32,10 +32,10 @@ Alternatively you can also use [`dcaribou/transfermarkt-scraper`](https://hub.do
 ```console
 docker run \
     -ti -v "$(pwd)"/.:/app \
-    dcaribou/transfermarkt-scraper \
-    scrapy crawl confederations -a parents=samples/confederations.json
+    dcaribou/transfermarkt-scraper:main \
+    scrapy crawl leagues -a parents=samples/confederations.json
 ```
-Items are extracted in JSON format. One JSON object is produced per item table and printed to the `stdout`. Samples of extracted data are provided in the [samples](samples) folder.
+Items are extracted in JSON format with one JSON object per item (confederation, league, club, player or appearance), which gets printed to the `stdout`. Samples of extracted data are provided in the [samples](samples) folder.
 
 ## config
 Check [setting.py](tfmkt/settings.py) for a reference of available configuration options
