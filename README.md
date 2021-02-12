@@ -37,5 +37,7 @@ docker run \
 ```
 Items are extracted in JSON format with one JSON object per item (confederation, league, club, player or appearance), which gets printed to the `stdout`. Samples of extracted data are provided in the [samples](samples) folder.
 
+Check out [player-scores](https://github.com/dcaribou/player-scores) to see `transfermarkt-scraper` in action on a real analytics project.
+
 ## config
 Check [setting.py](tfmkt/settings.py) for a reference of available configuration options
