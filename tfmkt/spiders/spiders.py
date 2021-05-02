@@ -134,9 +134,8 @@ class PlayersSpider(BaseSpider):
       """Parse clubs's page to collect all player's urls.
 
         @url https://www.transfermarkt.co.uk/manchester-city/kader/verein/281/saison_id/2019
-        @returns items 34 34
+        @returns requests 34 34
         @cb_kwargs {"parent": "dummy"}
-        @scrapes type href parent
       """
 
       player_hrefs = response.css(
@@ -146,11 +145,53 @@ class PlayersSpider(BaseSpider):
       without_duplicates = list(set(player_hrefs))
 
       for href in without_duplicates:
-          yield {
-            'type': 'player',
-            'href': href,
-            'parent': parent
+          
+          cb_kwargs = {
+            'base' : {
+              'type': 'player',
+              'href': href,
+              'parent': parent
+            }
           }
+
+          yield response.follow(href, self.parse_details, cb_kwargs=cb_kwargs)
+
+  def parse_details(self, response, base):
+    """Extract player details from the main page.
+    It currently only parses the PLAYER DATA section.
+
+      @url https://www.transfermarkt.co.uk/konstantinos-tsimikas/profil/spieler/338070
+      @returns items 1 1
+      @cb_kwargs {"base": {"href": "some_href", "type": "player", "parent": {}}}
+      @scrapes href type parent
+    """
+    # parse 'PLAYER DATA' section
+    attributes_table = response.css('table.auflistung tr')
+    attributes = {}
+    for row in attributes_table:
+      key = parameterize(row.xpath('th/text()').get().strip(), separator='_')
+
+      # try extracting the value as text
+      value = row.xpath('td//text()').get().strip()
+      if len(value) == 0:
+        # if text extraction fails, attempt 'href' extraction
+        href = row.xpath('td//a/@href').get()
+        if href and len(href) > 0:
+          value = {
+            'href': row.xpath('td//a/@href').get()
+          }
+        # if both text and href extraction fails, it must be text + image kind of cell
+        # "approximate" parsing extracting the 'title' property
+        else:
+          text = row.xpath('td//@title').get()
+          value = text
+
+      attributes[key] = value
+
+    yield {
+      **base,
+      **attributes
+    }
 
 class AppearancesSpider(BaseSpider):
   name = 'appearances'

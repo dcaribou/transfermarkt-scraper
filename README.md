@@ -20,13 +20,13 @@ for the necessary environment to run the scraper.
 # conda env create -f environment.yml
 # conda activate transfermarkt-scraper
 
-scrapy confederations > confederations.json
-scrapy leagues -a parents=confederations.json > leagues.json
+scrapy crawl confederations > confederations.json
+scrapy crawl leagues -a parents=confederations.json > leagues.json
 
 cat leagues | head -2 \
-    | scrapy clubs \
-    | scrapy players \
-    | scrapy appearances
+    | scrapy crawl clubs \
+    | scrapy crawl players \
+    | scrapy crawl appearances
 ```
 Alternatively you can also use [`dcaribou/transfermarkt-scraper`](https://hub.docker.com/repository/docker/dcaribou/transfermarkt-scraper) docker image
 
