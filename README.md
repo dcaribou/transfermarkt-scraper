@@ -22,7 +22,7 @@ This is a [scrapy](https://scrapy.org/) project, so it needs to be run with the
 for the necessary environment to run the scraper.
 
 ```console
-# create the conda environment with "conda env create -f environment.yml"
+# create the conda environment with (`conda env create -f environment.yml`)
 conda activate transfermarkt-scraper
 
 # discover confederantions and leagues on separate invokations
