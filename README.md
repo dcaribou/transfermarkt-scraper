@@ -6,7 +6,8 @@
 A web scraper for collecting data from [Transfermarkt](https://www.transfermarkt.co.uk/) website. It recurses into the Transfermarkt hierarchy to find leagues, clubs, players and [appearances satistics](https://www.transfermarkt.co.uk/diogo-jota/leistungsdatendetails/spieler/340950/saison/2020/verein/0/liga/0/wettbewerb/GB1/pos/0/trainer_id/0/plus/1), and extracts them as JSON objects. 
 
 ```console
-(root) |> Confederations |> Leagues |> Clubs |> (Players, Games) |> Appearances
+(root) |> Confederations |> Leagues |> Clubs |> Players |> Appearances
+                                    |> Games
 ```
 
 The scraper can be used to discover and refresh each one of these entities separately.
