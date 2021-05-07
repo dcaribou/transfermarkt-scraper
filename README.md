@@ -22,14 +22,14 @@ This is a [scrapy](https://scrapy.org/) project, so it needs to be run with the
 for the necessary environment to run the scraper.
 
 ```console
-# conda env create -f environment.yml
-# conda activate transfermarkt-scraper
+# create the conda environment with "conda env create -f environment.yml"
+conda activate transfermarkt-scraper
 
 # discover confederantions and leagues on separate invokations
 scrapy crawl confederations > confederations.json
 scrapy crawl leagues -a parents=confederations.json > leagues.json
 
-# you can use the intermediate files or pipe crawlers one after the other to traverse hierarchy 
+# you can use intermediate files or pipe crawlers one after the other to traverse hierarchy 
 cat leagues | head -2 \
     | scrapy crawl clubs \
     | scrapy crawl players \
