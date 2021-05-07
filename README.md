@@ -3,14 +3,18 @@
 ![docker build status](https://github.com/dcaribou/transfermarkt-scraper/workflows/Dockerhub%20Image/badge.svg)
 # transfermarkt-scraper
 
-A web scraper for collecting data from [Transfermarkt](https://www.transfermarkt.co.uk/) website. It recurses into the Transfermarkt hierarchy to find leagues, clubs, players and [appearances satistics](https://www.transfermarkt.co.uk/diogo-jota/leistungsdatendetails/spieler/340950/saison/2020/verein/0/liga/0/wettbewerb/GB1/pos/0/trainer_id/0/plus/1), and extracts them as JSON objects. 
+A web scraper for collecting data from [Transfermarkt](https://www.transfermarkt.co.uk/) website. It recurses into the Transfermarkt hierarchy to find
+[leagues](https://www.transfermarkt.co.uk/wettbewerbe/europa), 
+[games](https://www.transfermarkt.co.uk/premier-league/gesamtspielplan/wettbewerb/GB1/saison_id/2020),
+[clubs](https://www.transfermarkt.co.uk/premier-league/startseite/wettbewerb/GB1),
+[players](https://www.transfermarkt.co.uk/manchester-city/kader/verein/281/saison_id/2019) and [appearances](https://www.transfermarkt.co.uk/sergio-aguero/leistungsdaten/spieler/26399), and extract them as JSON objects. 
 
 ```console
 (root) |> Confederations |> Leagues |> Clubs |> Players |> Appearances
                                     |> Games
 ```
 
-The scraper can be used to discover and refresh each one of these entities separately.
+Each one of these entities can be discovered and refresh separately by invoking the corresponding crawler.
 
 ## run
 This is a [scrapy](https://scrapy.org/) project, so it needs to be run with the
@@ -21,9 +25,11 @@ for the necessary environment to run the scraper.
 # conda env create -f environment.yml
 # conda activate transfermarkt-scraper
 
+# discover confederantions and leagues on separate invokations
 scrapy crawl confederations > confederations.json
 scrapy crawl leagues -a parents=confederations.json > leagues.json
 
+# you can use the intermediate files or pipe crawlers one after the other to traverse hierarchy 
 cat leagues | head -2 \
     | scrapy crawl clubs \
     | scrapy crawl players \
