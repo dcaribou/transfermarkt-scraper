@@ -151,10 +151,21 @@ class GamesSpider(BaseSpider):
     date = date_attributes[1].get().strip()
     game_id = int(base['href'].split('/')[-1])
 
+    home_club_href = response.css('div.sb-heim a::attr(href)').get()
+    away_club_href = response.css('div.sb-gast a::attr(href)').get()
+
     item = {
       **base,
       'type': 'game',
       'game_id': game_id,
+      'home_club': {
+        'type': 'club',
+        'href': home_club_href
+      },
+      'away_club': {
+        'type': 'club',
+        'href': away_club_href
+      },
       'result': result,
       'matchday': matchday,
       'date': date
