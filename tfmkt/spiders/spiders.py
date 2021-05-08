@@ -151,10 +151,21 @@ class GamesSpider(BaseSpider):
     date = date_attributes[1].get().strip()
     game_id = int(base['href'].split('/')[-1])
 
+    home_club_href = response.css('div.sb-heim a::attr(href)').get()
+    away_club_href = response.css('div.sb-gast a::attr(href)').get()
+
     item = {
       **base,
       'type': 'game',
       'game_id': game_id,
+      'home_club': {
+        'type': 'club',
+        'href': home_club_href
+      },
+      'away_club': {
+        'type': 'club',
+        'href': away_club_href
+      },
       'result': result,
       'matchday': matchday,
       'date': date
@@ -318,11 +329,14 @@ class AppearancesSpider(BaseSpider):
         # identify cells containing club shields
         has_shield_class = elem.css('img.tiny_wappen').get() is not None
         club_href = elem.css('a.vereinprofil_tooltip::attr(href)').get()
+        result_href = elem.css('a.ergebnis-link::attr(href)').get()
 
         if has_classification_in_brackets or (club_href is not None and not has_shield_class):
           return None
         elif club_href is not None:
           return {'type': 'club', 'href': club_href}
+        elif result_href is not None:
+          return {'type': 'game', 'href': result_href}
         # finally, most columns can be parsed by extracting the text at the element's "last leaf"
         else:
           return elem.xpath('string(.)').get().strip()
