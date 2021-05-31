@@ -6,6 +6,7 @@ from inflection import parameterize, underscore
 import json
 import os
 import sys
+import re
 
 default_base_url = 'https://www.transfermarkt.co.uk'
 
@@ -47,9 +48,20 @@ class BaseSpider(scrapy.Spider):
       return []
 
   def start_requests(self):
+    
+    season = self.settings['SEASON']
+
+    for item in self.entrypoints:
+      if item['type'] in ['club']:
+        item['seasoned_href'] = f"{self.base_url}{item['href']}/saison_id/{season}"
+      elif item['type'] in ['league']:
+        item['seasoned_href'] = f"{self.base_url}{item['href']}/plus/0?saison_id={season}"
+      else:
+        item['seasoned_href'] = f"{self.base_url}{item['href']}"
+
     return [
       Request(
-        f"{self.base_url}{item['href']}",
+        item['seasoned_href'],
         cb_kwargs={
           'parent': item
         }
@@ -206,10 +218,11 @@ class ClubsSpider(BaseSpider):
     assert(len(with_teams_info) == 1)
     for row in with_teams_info[0].css('tbody tr'):
         href = extract_team_href(row)
+        href_strip_season = re.sub('/saison_id/[0-9]{4}$', '', href)
 
         # follow urls
         yield {
-          'type': 'club', 'href': href, 'parent': parent
+          'type': 'club', 'href': href_strip_season, 'parent': parent
         }
 
 class PlayersSpider(BaseSpider):
@@ -289,8 +302,12 @@ class AppearancesSpider(BaseSpider):
     @cb_kwargs {"parent": "dummy"}
     """
 
+    season = self.settings['SEASON']
+
     full_stats_href = response.xpath('//a[contains(text(),"View full stats")]/@href').get()
-    yield response.follow(full_stats_href, self.parse_stats, cb_kwargs={'parent': parent})
+    seasoned_full_stats_href = full_stats_href + f"/plus/0?saison={season}"
+
+    yield response.follow(seasoned_full_stats_href, self.parse_stats, cb_kwargs={'parent': parent})
 
   def parse_stats(self, response, parent):
     """Parse player's full stats. From this page we collect all player appearances
@@ -316,8 +333,8 @@ class AppearancesSpider(BaseSpider):
         ]
 
         for value_elements in value_elements_matrix:
-            assert(len(header_elements) == len(value_elements))
-            yield dict(zip(header_elements, value_elements))
+          assert(len(header_elements) == len(value_elements))
+          yield dict(zip(header_elements, value_elements))
 
     def parse_stats_elem(elem):
         """Parse an individual table cell"""
