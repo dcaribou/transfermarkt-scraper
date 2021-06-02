@@ -258,7 +258,7 @@ class PlayersSpider(BaseSpider):
     """Extract player details from the main page.
     It currently only parses the PLAYER DATA section.
 
-      @url https://www.transfermarkt.co.uk/konstantinos-tsimikas/profil/spieler/338070
+      @url https://www.transfermarkt.co.uk/joel-mumbongo/profil/spieler/381156
       @returns items 1 1
       @cb_kwargs {"base": {"href": "some_href", "type": "player", "parent": {}}}
       @scrapes href type parent
@@ -270,8 +270,8 @@ class PlayersSpider(BaseSpider):
       key = parameterize(row.xpath('th/text()').get().strip(), separator='_')
 
       # try extracting the value as text
-      value = row.xpath('td//text()').get().strip()
-      if len(value) == 0:
+      value = row.xpath('td//text()').get()
+      if not value or len(value) == 0:
         # if text extraction fails, attempt 'href' extraction
         href = row.xpath('td//a/@href').get()
         if href and len(href) > 0:
@@ -283,7 +283,8 @@ class PlayersSpider(BaseSpider):
         else:
           text = row.xpath('td//@title').get()
           value = text
-
+      else:
+        value = value.strip()
       attributes[key] = value
 
     yield {
