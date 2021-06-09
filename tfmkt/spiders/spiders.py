@@ -271,17 +271,17 @@ class PlayersSpider(BaseSpider):
 
       # try extracting the value as text
       value = row.xpath('td//text()').get()
-      if not value or len(value) == 0:
+      if not value or len(value.strip()) == 0:
         # if text extraction fails, attempt 'href' extraction
         href = row.xpath('td//a/@href').get()
-        if href and len(href) > 0:
+        if href and len(href.strip()) > 0:
           value = {
             'href': row.xpath('td//a/@href').get()
           }
         # if both text and href extraction fails, it must be text + image kind of cell
         # "approximate" parsing extracting the 'title' property
         else:
-          text = row.xpath('td//@title').get()
+          text = row.xpath('td//img/@title').get()
           value = text
       else:
         value = value.strip()
