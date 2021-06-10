@@ -327,6 +327,9 @@ class AppearancesSpider(BaseSpider):
                 "th > span::attr(title)"
             ).getall()
         ]
+        # for some reason, sometimes transfermarket might call the matchday as spieltag
+        # here we make sure that if that's the case we revert it back to matchday
+        header_elements = [header if header != 'spieltag' else 'matchday' for header in header_elements]
 
         value_elements_matrix = [
           [ parse_stats_elem(element) for element in row.xpath('td') if parse_stats_elem(element) is not None
@@ -334,7 +337,9 @@ class AppearancesSpider(BaseSpider):
         ]
 
         for value_elements in value_elements_matrix:
-          assert(len(header_elements) == len(value_elements))
+          header_elements_len = len(header_elements)
+          value_elements_len = len(value_elements)
+          assert(header_elements_len == value_elements_len), f"Header ({header_elements_len}) - cell element ({value_elements_len}) mismatch at {response.url}"
           yield dict(zip(header_elements, value_elements))
 
     def parse_stats_elem(elem):
@@ -349,7 +354,10 @@ class AppearancesSpider(BaseSpider):
         club_href = elem.css('a.vereinprofil_tooltip::attr(href)').get()
         result_href = elem.css('a.ergebnis-link::attr(href)').get()
 
-        if has_classification_in_brackets or (club_href is not None and not has_shield_class):
+        if (
+            (has_classification_in_brackets and club_href is not None and not has_shield_class) or
+            (club_href is not None and not has_shield_class) 
+            ):
           return None
         elif club_href is not None:
           return {'type': 'club', 'href': club_href}
