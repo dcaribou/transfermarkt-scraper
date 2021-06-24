@@ -355,7 +355,7 @@ class AppearancesSpider(BaseSpider):
         result_href = elem.css('a.ergebnis-link::attr(href)').get()
 
         if (
-            (has_classification_in_brackets and club_href is not None and not has_shield_class) or
+            (has_classification_in_brackets and club_href is None) or
             (club_href is not None and not has_shield_class) 
             ):
           return None
