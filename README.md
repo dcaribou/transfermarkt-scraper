@@ -10,7 +10,7 @@ A web scraper for collecting data from [Transfermarkt](https://www.transfermarkt
 [players](https://www.transfermarkt.co.uk/manchester-city/kader/verein/281/saison_id/2019) and [appearances](https://www.transfermarkt.co.uk/sergio-aguero/leistungsdaten/spieler/26399), and extract them as JSON objects. 
 
 ```console
-Confederations ====> Leagues ====> (Clubs, Games) ====> Players ====> Appearances
+====> Confederations ====> Leagues ====> (Clubs, Games) ====> Players ====> Appearances
 ```
 
 Each one of these entities can be discovered and refresh separately by invoking the corresponding crawler.
