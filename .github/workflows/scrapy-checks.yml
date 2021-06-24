@@ -35,4 +35,4 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Check scrapy contracts
       run: |
-        scrapy check
+        scrapy check -s USER_AGENT='scrapy checks'
