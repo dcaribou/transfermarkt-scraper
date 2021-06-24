@@ -10,8 +10,8 @@ A web scraper for collecting data from [Transfermarkt](https://www.transfermarkt
 [players](https://www.transfermarkt.co.uk/manchester-city/kader/verein/281/saison_id/2019) and [appearances](https://www.transfermarkt.co.uk/sergio-aguero/leistungsdaten/spieler/26399), and extract them as JSON objects. 
 
 ```console
-(root) |> Confederations |> Leagues |> Clubs |> Players |> Appearances
-                                    |> Games
+Confederations   ==>   Leagues   ==>   Clubs   ==>   Players   ==>   Appearances
+                                 ==>   Games
 ```
 
 Each one of these entities can be discovered and refresh separately by invoking the corresponding crawler.
@@ -36,6 +36,7 @@ cat leagues | head -2 \
     | scrapy crawl players \
     | scrapy crawl appearances
 ```
+
 Alternatively you can also use [`dcaribou/transfermarkt-scraper`](https://hub.docker.com/repository/docker/dcaribou/transfermarkt-scraper) docker image
 
 ```console
@@ -44,6 +45,9 @@ docker run \
     dcaribou/transfermarkt-scraper:main \
     scrapy crawl leagues -a parents=samples/confederations.json
 ```
+> :warning: When using this scraper please identify your project accordingly by using a custom user agent. You can pass the user agent string to the scraper by using the `USER_AGENT` scrapy setting
+> For example `scrapy crawl players -s USER_AGENT=<your user agent> `
+ 
 Items are extracted in JSON format with one JSON object per item (confederation, league, club, player or appearance), which gets printed to the `stdout`. Samples of extracted data are provided in the [samples](samples) folder.
 
 Check out [player-scores](https://github.com/dcaribou/player-scores) to see `transfermarkt-scraper` in action on a real analytics project.

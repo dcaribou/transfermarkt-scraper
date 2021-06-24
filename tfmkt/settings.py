@@ -4,8 +4,6 @@ BOT_NAME = 'tfmkt'
 SPIDER_MODULES = ['tfmkt.spiders']
 NEWSPIDER_MODULE = 'tfmkt.spiders'
 
-# Crawl responsibly by identifying yourself (and your website) on the user-agent
-USER_AGENT = 'transfermarkt-scraper (https://github.com/dcaribou/transfermarkt-scraper)'
 
 # Default season to scrape
 SEASON = 2020
