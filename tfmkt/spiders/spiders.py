@@ -313,7 +313,7 @@ class AppearancesSpider(BaseSpider):
   def parse_stats(self, response, parent):
     """Parse player's full stats. From this page we collect all player appearances
 
-    @url https://www.transfermarkt.co.uk/sergio-aguero/leistungsdaten/spieler/26399
+    @url https://www.transfermarkt.co.uk/sergio-aguero/leistungsdaten/spieler/26399/plus/0?saison=2020
     @returns items 9
     @cb_kwargs {"parent": "dummy"}
     @scrapes assists competition_code date for goals href matchday minutes_played opponent parent pos red_cards result second_yellow_cards type venue yellow_cards
