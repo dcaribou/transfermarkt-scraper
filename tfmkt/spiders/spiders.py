@@ -339,7 +339,7 @@ class AppearancesSpider(BaseSpider):
         for value_elements in value_elements_matrix:
           header_elements_len = len(header_elements)
           value_elements_len = len(value_elements)
-          assert(header_elements_len == value_elements_len), f"Header ({header_elements_len}) - cell element ({value_elements_len}) mismatch at {response.url}"
+          assert(header_elements_len == value_elements_len), f"Header ({header_elements}) - cell element ({value_elements}) mismatch at {response.url}"
           yield dict(zip(header_elements, value_elements))
 
     def parse_stats_elem(elem):
@@ -350,7 +350,7 @@ class AppearancesSpider(BaseSpider):
         has_classification_in_brackets = elem.xpath('*[@class = "tabellenplatz"]').get() is not None
         # club information is parsed from team "shields" using a separate logic from the rest
         # identify cells containing club shields
-        has_shield_class = elem.css('img.tiny_wappen').get() is not None
+        has_shield_class = elem.css('img::attr(src)').get() is not None
         club_href = elem.css('a.vereinprofil_tooltip::attr(href)').get()
         result_href = elem.css('a.ergebnis-link::attr(href)').get()
 
