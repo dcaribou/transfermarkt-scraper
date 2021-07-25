@@ -65,29 +65,29 @@ class ClubsSpider(BaseSpider):
     # parsing of "dataContent" section
 
     squad_size_element = response.xpath('//p[span[@class="dataItem"] = "Squad size:"]')[0]
-    attributes['squad_size'] = squad_size_element.xpath('span[@class="dataValue"]/text()').get().strip()
+    attributes['squad_size'] = squad_size_element.xpath('span[@class="dataValue"]/text()').get()
 
     average_age_element = response.xpath('//p[span[@class="dataItem"] = "Average age:"]')[0]
-    attributes['average_age'] = average_age_element.xpath('span[@class="dataValue"]/text()').get().strip()
+    attributes['average_age'] = average_age_element.xpath('span[@class="dataValue"]/text()').get()
 
     foreigners_element = response.xpath('//p[span[@class="dataItem"] = " Foreigners:"]')[0]
-    attributes['foreigners_number'] = foreigners_element.xpath('span[@class="dataValue"]/a/text()').get().strip()
-    attributes['foreigners_percentage'] = foreigners_element.xpath('span[@class="dataValue"]/span/text()').get().strip()
+    attributes['foreigners_number'] = foreigners_element.xpath('span[@class="dataValue"]/a/text()').get()
+    attributes['foreigners_percentage'] = foreigners_element.xpath('span[@class="dataValue"]/span/text()').get()
 
     national_team_players_element = response.xpath('//p[span[@class="dataItem"] = "National team players:"]')[0]
     attributes['national_team_players'] = (
       national_team_players_element
         .xpath('span[@class="dataValue"]/a/text()')
         .get()
-        .strip()
+        
     )
 
     stadium_element = response.xpath('//p[span[@class="dataItem"] = "Stadium:"]')[0]
-    attributes['stadium_name'] = stadium_element.xpath('span[@class="dataValue"]/a/text()').get().strip()
-    attributes['stadium_seats'] = stadium_element.xpath('span[@class="dataValue"]/span/text()').get().strip()
+    attributes['stadium_name'] = stadium_element.xpath('span[@class="dataValue"]/a/text()').get()
+    attributes['stadium_seats'] = stadium_element.xpath('span[@class="dataValue"]/span/text()').get()
 
     transfer_record_element = response.xpath('//p[span[@class="dataItem"] = "Current transfer record:"]')[0]
-    attributes['net_transfer_record'] = transfer_record_element.xpath('span[@class="dataValue"]/span/a/text()').get().strip()
+    attributes['net_transfer_record'] = transfer_record_element.xpath('span[@class="dataValue"]/span/a/text()').get()
 
     # inspect_response(response,self)
     # parsing of "Coach for the season"
@@ -95,8 +95,14 @@ class ClubsSpider(BaseSpider):
       response
         .xpath('//div[contains(@data-viewport, "Mitarbeiter")]//div[@class="container-hauptinfo"]/a/text()')
         .get()
-        .strip()
+        
     )
+
+    for key, value in attributes.items():
+      if value:
+        attributes[key] = value.strip()
+      else:
+        attributes[key] = value
 
     yield {
       **base,
