@@ -13,7 +13,7 @@ A web scraper for collecting data from [Transfermarkt](https://www.transfermarkt
 ====> Confederations ====> Leagues ====> (Clubs, Games) ====> Players ====> Appearances
 ```
 
-Each one of these entities can be discovered and refresh separately by invoking the corresponding crawler.
+Each one of these entities can be discovered and refreshed separately by invoking the corresponding crawler.
 
 ## run
 This is a [scrapy](https://scrapy.org/) project, so it needs to be run with the
