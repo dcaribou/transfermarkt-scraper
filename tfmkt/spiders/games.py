@@ -2,6 +2,8 @@ from tfmkt.spiders.common import BaseSpider
 from scrapy.shell import inspect_response # required for debugging
 import re
 
+from tfmkt.utils import safe_strip
+
 class GamesSpider(BaseSpider):
   name = 'games'
 
@@ -56,17 +58,47 @@ class GamesSpider(BaseSpider):
     @url https://www.transfermarkt.co.uk/caykur-rizespor_fenerbahce-sk/index/spielbericht/3426662
     @returns items 1 1
     @cb_kwargs {"base": {"href": "some_href/3", "type": "league", "parent": {}}}
-    @scrapes type href parent game_id result matchday date
+    @scrapes type href parent game_id result matchday date time stadium attendance
     """
 
-    result = response.css('div.sb-endstand::text').get().strip()
-    date_attributes = response.css('p.sb-datum').xpath('a/text()')
-    matchday = date_attributes[0].get().strip()
-    date = date_attributes[1].get().strip()
+    # uncommenting the two lines below will open a scrapy shell with the context of this request
+    # when you run the crawler. this is useful for developing new extractors
+
+    # inspect_response(response, self)
+    # exit(1)
+
     game_id = int(base['href'].split('/')[-1])
 
-    home_club_href = response.css('div.sb-heim a::attr(href)').get()
-    away_club_href = response.css('div.sb-gast a::attr(href)').get()
+    game_box = response.css('div.box-content')
+
+    # extract home and away "boxes" attributes
+    home_club_box = game_box.css('div.sb-heim')
+    away_club_box = game_box.css('div.sb-gast')
+
+    home_club_href = home_club_box.css('a::attr(href)').get()
+    away_club_href = away_club_box.css('a::attr(href)').get()
+
+    home_club_position = home_club_box[0].xpath('p/text()').get()
+    away_club_position = away_club_box[0].xpath('p/text()').get()
+
+    # extract date and time "box" attributes
+    datetime_box = game_box.css('p.sb-datum')
+    date_elements = datetime_box.xpath('node()')
+
+    matchday = date_elements[1].xpath('text()').get()
+    date = safe_strip(date_elements[3].xpath('text()').get())
+    time = safe_strip(date_elements[4].get().strip())[-7:]
+
+    # extract venue "box" attributes
+    venue_box = game_box.css('p.sb-zusatzinfos')
+
+    stadium = safe_strip(venue_box.xpath('node()')[1].xpath('a/text()').get())
+    attendance = safe_strip(venue_box.xpath('node()')[1].xpath('strong/text()').get())
+
+    # extract results "box" attributes
+    result_box = game_box.css('div.ergebnis-wrap')
+
+    result = safe_strip(result_box.css('div.sb-endstand::text').get())
 
     item = {
       **base,
@@ -76,13 +108,18 @@ class GamesSpider(BaseSpider):
         'type': 'club',
         'href': home_club_href
       },
+      'home_club_position': home_club_position,
       'away_club': {
         'type': 'club',
         'href': away_club_href
       },
+      'away_club_position': away_club_position,
       'result': result,
       'matchday': matchday,
-      'date': date
+      'date': date,
+      'time': time,
+      'stadium': stadium,
+      'attendance': attendance
     }
     
     yield item
