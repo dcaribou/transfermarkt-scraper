@@ -52,3 +52,11 @@ Check out [player-scores](https://github.com/dcaribou/player-scores) to see `tra
 
 ## config
 Check [setting.py](tfmkt/settings.py) for a reference of available configuration options
+
+## contribute
+Extending existing crawlers in this project in order to scrape additional data or even creating new crawlers is quite straightforward. If you want to contribute with an enhancement to `transfermarkt-scraper` I suggest that you follow a workflow similar to
+1. Fork the repository
+2. Modify or add new crawlers to `tfmkt/spiders`. [Here is an example PR](https://github.com/dcaribou/transfermarkt-scraper/pull/25/files) that extends the `games` crawler to scrape a few additional fields from Transfermakt games page.
+3. Create a PR with your changes and a short description for the enhancement and send it over :rocket:
+
+It is usually also a good idea to have a short discussion about the enhancement beforehand. If you want to propose a change and collect some feeback before you start coding you can do so by creating an issue with your idea in the [Issues](https://github.com/dcaribou/transfermarkt-scraper/issues) section.
