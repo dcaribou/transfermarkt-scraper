@@ -45,7 +45,7 @@ class BaseSpider(scrapy.Spider):
     for item in self.entrypoints:
       if item['type'] in ['club']:
         item['seasoned_href'] = f"{self.base_url}{item['href']}/saison_id/{season}"
-      elif item['type'] in ['league']:
+      elif item['type'] in ['competition']:
         item['seasoned_href'] = f"{self.base_url}{item['href']}/plus/0?saison_id={season}"
       else:
         item['seasoned_href'] = f"{self.base_url}{item['href']}"
