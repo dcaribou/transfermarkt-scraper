@@ -55,6 +55,14 @@ class CompetitionsSpider(BaseSpider):
       yield response.follow(self.base_url + href, self.parse_competitions, cb_kwargs=cb_kwargs)
 
   def parse_competitions(self, response, base):
+    """Parse competitions from the country competitions page.
+
+    @url https://www.transfermarkt.co.uk/wettbewerbe/national/wettbewerbe/189
+    @returns items 3 3
+    @cb_kwargs {"base": {"href": "some_href/3", "type": "competition", "parent": {}, "country_id": 1, "country_name": "n", "country_code": "CC"}}
+    @scrapes type href parent country_id country_name country_code competition_type
+    """
+
     # inspect_response(response, self)
     # exit(1)
 
