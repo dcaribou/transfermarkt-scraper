@@ -16,17 +16,26 @@ class GamesSpider(BaseSpider):
     @scrapes type href parent
     """
 
+    # uncommenting the two lines below will open a scrapy shell with the context of this request
+    # when you run the crawler. this is useful for developing new extractors
+
+    # inspect_response(response, self)
+    # exit(1)
+
+    cb_kwargs = {
+      'base' : {
+        'parent': parent
+      }
+    }
+
     footer_links = response.css('div.footer-links')
     for footer_link in footer_links:
-      text = footer_link.xpath('a//text()').get()
-      if text == "All fixtures & results":
+      text = footer_link.xpath('a//text()').get().strip()
+      if text in [
+        "All fixtures & results",
+        "All games"
+        ]:
         next_url = footer_link.xpath('a/@href').get()
-
-        cb_kwargs = {
-            'base' : {
-              'parent': parent
-            }
-          }
 
         return response.follow(next_url, self.extract_game_urls, cb_kwargs=cb_kwargs)
 
@@ -38,6 +47,9 @@ class GamesSpider(BaseSpider):
     @cb_kwargs {"base": {"href": "some_href", "type": "league", "parent": {}}}
     @scrapes type href parent game_id 
     """
+
+    # inspect_response(response, self)
+    # exit(1)
 
     game_links = response.css('a.ergebnis-link')
     for game_link in game_links:
@@ -61,9 +73,6 @@ class GamesSpider(BaseSpider):
     @scrapes type href parent game_id result matchday date time stadium attendance
     """
 
-    # uncommenting the two lines below will open a scrapy shell with the context of this request
-    # when you run the crawler. this is useful for developing new extractors
-
     # inspect_response(response, self)
     # exit(1)
 
@@ -82,13 +91,17 @@ class GamesSpider(BaseSpider):
     away_club_position = away_club_box[0].xpath('p/text()').get()
 
     # extract date and time "box" attributes
-    datetime_box = game_box.css('p.sb-datum')
-    date_elements = datetime_box.xpath('node()')
+    datetime_box = game_box.css('div.sb-spieldaten')[0]
 
-    matchday = date_elements[1].xpath('text()').get()
-    date = safe_strip(date_elements[3].xpath('text()').get())
-    time = safe_strip(date_elements[4].get().strip())[-7:]
+    text_elements = [
+      element for element in datetime_box.xpath('p//text()') 
+      if len(safe_strip(element.get())) > 0
+    ]
 
+    matchday = safe_strip(text_elements[0].get()).split("  ")[0]
+    date = safe_strip(datetime_box.xpath('p/a[contains(@href, "datum")]/text()').get())
+    time = safe_strip(datetime_box.xpath('p')[0].xpath('node()')[-1].get())[-7:]
+    
     # extract venue "box" attributes
     venue_box = game_box.css('p.sb-zusatzinfos')
 
