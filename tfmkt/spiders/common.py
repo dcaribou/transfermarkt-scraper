@@ -40,8 +40,15 @@ class BaseSpider(scrapy.Spider):
 
   def start_requests(self):
 
+    applicable_items = []
+
     for item in self.entrypoints:
+      # clubs extraction is best done on first_tier competition types only
+      if self.name == 'clubs' and item['competition_type'] != 'first_tier':
+        continue
       item['seasoned_href'] = self.seasonize_entrypoin_href(item)
+      applicable_items.append(item)
+
 
     return [
       Request(
@@ -50,7 +57,7 @@ class BaseSpider(scrapy.Spider):
           'parent': item
         }
       )
-      for item in self.entrypoints
+      for item in applicable_items
     ]
 
   def seasonize_entrypoin_href(self, item):
