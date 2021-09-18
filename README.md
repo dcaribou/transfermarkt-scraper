@@ -4,13 +4,13 @@
 # transfermarkt-scraper
 
 A web scraper for collecting data from [Transfermarkt](https://www.transfermarkt.co.uk/) website. It recurses into the Transfermarkt hierarchy to find
-[leagues](https://www.transfermarkt.co.uk/wettbewerbe/europa), 
+[competitions](https://www.transfermarkt.co.uk/wettbewerbe/europa), 
 [games](https://www.transfermarkt.co.uk/premier-league/gesamtspielplan/wettbewerb/GB1/saison_id/2020),
 [clubs](https://www.transfermarkt.co.uk/premier-league/startseite/wettbewerb/GB1),
 [players](https://www.transfermarkt.co.uk/manchester-city/kader/verein/281/saison_id/2019) and [appearances](https://www.transfermarkt.co.uk/sergio-aguero/leistungsdaten/spieler/26399), and extract them as JSON objects. 
 
 ```console
-====> Confederations ====> Leagues ====> (Clubs, Games) ====> Players ====> Appearances
+====> Confederations ====> Competitions ====> (Clubs, Games) ====> Players ====> Appearances
 ```
 
 Each one of these entities can be discovered and refreshed separately by invoking the corresponding crawler.
@@ -25,12 +25,12 @@ for the necessary environment to run the scraper.
 conda env create -f environment.yml
 conda activate transfermarkt-scraper
 
-# discover confederantions and leagues on separate invokations
+# discover confederantions and competitions on separate invokations
 scrapy crawl confederations > confederations.json
-scrapy crawl leagues -a parents=confederations.json > leagues.json
+scrapy crawl competitions -a parents=confederations.json > competitions.json
 
-# you can use intermediate files or pipe crawlers one after the other to traverse hierarchy 
-cat leagues | head -2 \
+# you can use intermediate files or pipe crawlers one after the other to traverse the hierarchy 
+cat competitions | head -2 \
     | scrapy crawl clubs \
     | scrapy crawl players \
     | scrapy crawl appearances
@@ -42,7 +42,7 @@ Alternatively you can also use [`dcaribou/transfermarkt-scraper`](https://hub.do
 docker run \
     -ti -v "$(pwd)"/.:/app \
     dcaribou/transfermarkt-scraper:main \
-    scrapy crawl leagues -a parents=samples/confederations.json
+    scrapy crawl competitions -a parents=samples/confederations.json
 ```
 > :warning: When using this scraper please identify your project accordingly by using a custom user agent. You can pass the user agent string using the `USER_AGENT` scrapy setting. For example, `scrapy crawl players -s USER_AGENT=<your user agent> `
  

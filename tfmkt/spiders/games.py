@@ -8,7 +8,7 @@ class GamesSpider(BaseSpider):
   name = 'games'
 
   def parse(self, response, parent):
-    """Parse leagues page. From this page follow to the games and fixutres page.
+    """Parse competition page. From this page follow to the games and fixutres page.
 
     @url https://www.transfermarkt.co.uk/premier-league/startseite/wettbewerb/GB1
     @returns requests 1 1

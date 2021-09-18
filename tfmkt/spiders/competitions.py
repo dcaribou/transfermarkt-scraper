@@ -13,7 +13,7 @@ class CompetitionsSpider(BaseSpider):
 
   def parse(self, response, parent):
     """Parse confederations page. From this page we collect all
-    confederation's leagues urls
+    confederation's competitions urls
 
     @url https://www.transfermarkt.co.uk/wettbewerbe/europa
     @returns requests 25 25
