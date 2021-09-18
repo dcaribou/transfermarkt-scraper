@@ -93,7 +93,12 @@ class GamesSpider(BaseSpider):
     # extract date and time "box" attributes
     datetime_box = game_box.css('div.sb-spieldaten')[0]
 
-    matchday = safe_strip(datetime_box.xpath('p/node()//text()')[0].get()).split("  ")[0]
+    text_elements = [
+      element for element in datetime_box.xpath('p//text()') 
+      if len(safe_strip(element.get())) > 0
+    ]
+
+    matchday = safe_strip(text_elements[0].get()).split("  ")[0]
     date = safe_strip(datetime_box.xpath('p/a[contains(@href, "datum")]/text()').get())
     time = safe_strip(datetime_box.xpath('p')[0].xpath('node()')[-1].get())[-7:]
     

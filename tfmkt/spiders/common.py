@@ -39,16 +39,9 @@ class BaseSpider(scrapy.Spider):
       return []
 
   def start_requests(self):
-    
-    season = self.settings['SEASON']
 
     for item in self.entrypoints:
-      if item['type'] in ['club']:
-        item['seasoned_href'] = f"{self.base_url}{item['href']}/saison_id/{season}"
-      elif item['type'] in ['competition']:
-        item['seasoned_href'] = f"{self.base_url}{item['href']}/plus/0?saison_id={season}"
-      else:
-        item['seasoned_href'] = f"{self.base_url}{item['href']}"
+      item['seasoned_href'] = self.seasonize_entrypoin_href(item)
 
     return [
       Request(
@@ -59,3 +52,20 @@ class BaseSpider(scrapy.Spider):
       )
       for item in self.entrypoints
     ]
+
+  def seasonize_entrypoin_href(self, item):
+
+    season = self.settings['SEASON']
+
+    if item['type'] == 'club':
+      seasonized_href = f"{self.base_url}{item['href']}/saison_id/{season}"
+    elif item['type'] == 'competition':
+      if item['competition_type'] == 'first_tier':
+        seasonized_href = f"{self.base_url}{item['href']}/plus/0?saison_id={season}"
+      else:
+        seasonized_href = f"{self.base_url}{item['href']}?saison_id={season}".replace("wettbewerb", "pokalwettbewerb")
+    else:
+      seasonized_href = f"{self.base_url}{item['href']}"
+
+    return seasonized_href
+
