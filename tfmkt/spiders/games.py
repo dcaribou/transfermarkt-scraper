@@ -70,7 +70,7 @@ class GamesSpider(BaseSpider):
     @url https://www.transfermarkt.co.uk/caykur-rizespor_fenerbahce-sk/index/spielbericht/3426662
     @returns items 1 1
     @cb_kwargs {"base": {"href": "some_href/3", "type": "league", "parent": {}}}
-    @scrapes type href parent game_id result matchday date time stadium attendance
+    @scrapes type href parent game_id result matchday date stadium attendance
     """
 
     # inspect_response(response, self)
@@ -100,7 +100,6 @@ class GamesSpider(BaseSpider):
 
     matchday = safe_strip(text_elements[0].get()).split("  ")[0]
     date = safe_strip(datetime_box.xpath('p/a[contains(@href, "datum")]/text()').get())
-    time = safe_strip(datetime_box.xpath('p')[0].xpath('node()')[-1].get())[-7:]
     
     # extract venue "box" attributes
     venue_box = game_box.css('p.sb-zusatzinfos')
@@ -130,7 +129,6 @@ class GamesSpider(BaseSpider):
       'result': result,
       'matchday': matchday,
       'date': date,
-      'time': time,
       'stadium': stadium,
       'attendance': attendance
     }
