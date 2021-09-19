@@ -69,8 +69,10 @@ class BaseSpider(scrapy.Spider):
     elif item['type'] == 'competition':
       if item['competition_type'] == 'first_tier':
         seasonized_href = f"{self.base_url}{item['href']}/plus/0?saison_id={season}"
-      else:
+      elif item['competition_type'] in ['domestic_cup', 'domestic_super_cup']:
         seasonized_href = f"{self.base_url}{item['href']}?saison_id={season}".replace("wettbewerb", "pokalwettbewerb")
+      else:
+        seasonized_href = f"{self.base_url}{item['href']}?saison_id={season}"
     else:
       seasonized_href = f"{self.base_url}{item['href']}"
 
