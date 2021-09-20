@@ -41,6 +41,13 @@ class PlayersSpider(BaseSpider):
       @cb_kwargs {"base": {"href": "some_href", "type": "player", "parent": {}}}
       @scrapes href type parent
     """
+
+    # uncommenting the two lines below will open a scrapy shell with the context of this request
+    # when you run the crawler. this is useful for developing new extractors
+
+    # inspect_response(response, self)
+    # exit(1)
+
     # parse 'PLAYER DATA' section
     attributes_table = response.css('table.auflistung tr')
     attributes = {}
