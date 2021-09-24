@@ -53,12 +53,18 @@ class PlayersSpider(BaseSpider):
 
     attributes['name_in_home_country'] = response.xpath("//span[text()='Name in home country:']/following::span[1]/text()").get()
     attributes['date_of_birth'] = response.xpath("//span[text()='Date of birth:']/following::span[1]//text()").get()
-    attributes['place_of_birth'] = response.xpath("//span[text()='Place of birth:']/following::span[1]/span/text()").get()
+    attributes['place_of_birth'] = {
+      'country': response.xpath("//span[text()='Place of birth:']/following::span[1]/span/img/@title").get(),
+      'city': response.xpath("//span[text()='Place of birth:']/following::span[1]/span/text()").get()
+    }
     attributes['age'] = response.xpath("//span[text()='Age:']/following::span[1]/text()").get()
     attributes['height'] = response.xpath("//span[text()='Height:']/following::span[1]/text()").get()
     attributes['citizienship'] = response.xpath("//span[text()='Citizenship:']/following::span[1]/img/@title").get()
     attributes['position'] = self.safe_strip(response.xpath("//span[text()='Position:']/following::span[1]/text()").get())
-    attributes['player_agent'] = response.xpath("//span[text()='Player agent:']/following::span[1]/a/text()").get()
+    attributes['player_agent'] = {
+      'href': response.xpath("//span[text()='Player agent:']/following::span[1]/a/@href").get(),
+      'name': response.xpath("//span[text()='Player agent:']/following::span[1]/a/text()").get()
+    }
     attributes['current_club'] = {
       'href': response.xpath("//span[contains(text(),'Current club:')]/following::span[1]/a/@href").get()
     }
@@ -67,12 +73,15 @@ class PlayersSpider(BaseSpider):
     attributes['contract_expires'] = self.safe_strip(response.xpath("//span[text()='Contract expires:']/following::span[1]/text()").get())
     attributes['day_of_last_contract_extension'] = response.xpath("//span[text()='Date of last contract extension:']/following::span[1]/text()").get()
     attributes['outfitter'] = response.xpath("//span[text()='Outfitter:']/following::span[1]/text()").get()
+
     social_media_value_node = response.xpath("//span[text()='Social-Media:']/following::span[1]")
     if len(social_media_value_node) > 0:
-      attributes['social_media'] = {
-        'twitter': social_media_value_node[0].xpath('//a[@title="Twitter"]/@href').get(),
-        'instagram': social_media_value_node[0].xpath('//a[@title="Instagram"]/@href').get()
-      }
+      attributes['social_media'] = []
+      for element in social_media_value_node.xpath('div[@class="socialmedia-icons"]/a'):
+        href = element.xpath('@href').get()
+        attributes['social_media'].append(
+          href
+        )
 
     yield {
       **base,
