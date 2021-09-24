@@ -78,3 +78,9 @@ class BaseSpider(scrapy.Spider):
 
     return seasonized_href
 
+  def safe_strip(self, word):
+    if word:
+      return word.strip()
+    else:
+      return word
+
