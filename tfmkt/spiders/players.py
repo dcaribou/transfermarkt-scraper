@@ -59,7 +59,7 @@ class PlayersSpider(BaseSpider):
     }
     attributes['age'] = response.xpath("//span[text()='Age:']/following::span[1]/text()").get()
     attributes['height'] = response.xpath("//span[text()='Height:']/following::span[1]/text()").get()
-    attributes['citizienship'] = response.xpath("//span[text()='Citizenship:']/following::span[1]/img/@title").get()
+    attributes['citizenship'] = response.xpath("//span[text()='Citizenship:']/following::span[1]/img/@title").get()
     attributes['position'] = self.safe_strip(response.xpath("//span[text()='Position:']/following::span[1]/text()").get())
     attributes['player_agent'] = {
       'href': response.xpath("//span[text()='Player agent:']/following::span[1]/a/@href").get(),
