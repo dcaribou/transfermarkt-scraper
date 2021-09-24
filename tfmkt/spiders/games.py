@@ -2,8 +2,6 @@ from tfmkt.spiders.common import BaseSpider
 from scrapy.shell import inspect_response # required for debugging
 import re
 
-from tfmkt.utils import safe_strip
-
 class GamesSpider(BaseSpider):
   name = 'games'
 
@@ -95,22 +93,22 @@ class GamesSpider(BaseSpider):
 
     text_elements = [
       element for element in datetime_box.xpath('p//text()') 
-      if len(safe_strip(element.get())) > 0
+      if len(self.safe_strip(element.get())) > 0
     ]
 
-    matchday = safe_strip(text_elements[0].get()).split("  ")[0]
-    date = safe_strip(datetime_box.xpath('p/a[contains(@href, "datum")]/text()').get())
+    matchday = self.safe_strip(text_elements[0].get()).split("  ")[0]
+    date = self.safe_strip(datetime_box.xpath('p/a[contains(@href, "datum")]/text()').get())
     
     # extract venue "box" attributes
     venue_box = game_box.css('p.sb-zusatzinfos')
 
-    stadium = safe_strip(venue_box.xpath('node()')[1].xpath('a/text()').get())
-    attendance = safe_strip(venue_box.xpath('node()')[1].xpath('strong/text()').get())
+    stadium = self.safe_strip(venue_box.xpath('node()')[1].xpath('a/text()').get())
+    attendance = self.safe_strip(venue_box.xpath('node()')[1].xpath('strong/text()').get())
 
     # extract results "box" attributes
     result_box = game_box.css('div.ergebnis-wrap')
 
-    result = safe_strip(result_box.css('div.sb-endstand::text').get())
+    result = self.safe_strip(result_box.css('div.sb-endstand::text').get())
 
     item = {
       **base,

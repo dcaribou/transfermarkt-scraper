@@ -49,28 +49,30 @@ class PlayersSpider(BaseSpider):
     # exit(1)
 
     # parse 'PLAYER DATA' section
-    attributes_table = response.css('table.auflistung tr')
     attributes = {}
-    for row in attributes_table:
-      key = parameterize(row.xpath('th/text()').get().strip(), separator='_')
 
-      # try extracting the value as text
-      value = row.xpath('td//text()').get()
-      if not value or len(value.strip()) == 0:
-        # if text extraction fails, attempt 'href' extraction
-        href = row.xpath('td//a/@href').get()
-        if href and len(href.strip()) > 0:
-          value = {
-            'href': row.xpath('td//a/@href').get()
-          }
-        # if both text and href extraction fails, it must be text + image kind of cell
-        # "approximate" parsing extracting the 'title' property
-        else:
-          text = row.xpath('td//img/@title').get()
-          value = text
-      else:
-        value = value.strip()
-      attributes[key] = value
+    attributes['name_in_home_country'] = response.xpath("//span[text()='Name in home country:']/following::span[1]/text()").get()
+    attributes['date_of_birth'] = response.xpath("//span[text()='Date of birth:']/following::span[1]//text()").get()
+    attributes['place_of_birth'] = response.xpath("//span[text()='Place of birth:']/following::span[1]/span/text()").get()
+    attributes['age'] = response.xpath("//span[text()='Age:']/following::span[1]/text()").get()
+    attributes['height'] = response.xpath("//span[text()='Height:']/following::span[1]/text()").get()
+    attributes['citizienship'] = response.xpath("//span[text()='Citizenship:']/following::span[1]/img/@title").get()
+    attributes['position'] = self.safe_strip(response.xpath("//span[text()='Position:']/following::span[1]/text()").get())
+    attributes['player_agent'] = response.xpath("//span[text()='Player agent:']/following::span[1]/a/text()").get()
+    attributes['current_club'] = {
+      'href': response.xpath("//span[contains(text(),'Current club:')]/following::span[1]/a/@href").get()
+    }
+    attributes['foot'] = response.xpath("//span[text()='Foot:']/following::span[1]/text()").get()
+    attributes['joined'] = response.xpath("//span[text()='Joined:']/following::span[1]/text()").get()
+    attributes['contract_expires'] = self.safe_strip(response.xpath("//span[text()='Contract expires:']/following::span[1]/text()").get())
+    attributes['day_of_last_contract_extension'] = response.xpath("//span[text()='Date of last contract extension:']/following::span[1]/text()").get()
+    attributes['outfitter'] = response.xpath("//span[text()='Outfitter:']/following::span[1]/text()").get()
+    social_media_value_node = response.xpath("//span[text()='Social-Media:']/following::span[1]")
+    if len(social_media_value_node) > 0:
+      attributes['social_media'] = {
+        'twitter': social_media_value_node[0].xpath('//a[@title="Twitter"]/@href').get(),
+        'instagram': social_media_value_node[0].xpath('//a[@title="Instagram"]/@href').get()
+      }
 
     yield {
       **base,
