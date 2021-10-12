@@ -118,24 +118,27 @@ class CompetitionsSpider(BaseSpider):
 
     self.international_competitions['parent'] = base['parent']
 
-    box = relevant_boxes[international_competitions_tag]
-    box_rows = box.xpath('div[@class = "responsive-table"]//tr[contains(@class, "bg_blau_20")]')
+    if international_competitions_tag in relevant_boxes.keys():
+      box = relevant_boxes[international_competitions_tag]
+      box_rows = box.xpath('div[@class = "responsive-table"]//tr[contains(@class, "bg_blau_20")]')
 
-    for row in box_rows:
-      competition_href = row.xpath('td')[1].xpath('a/@href').get()
-      competition_href_wo_season = re.sub(r'/saison_id/[0-9]{4}','', competition_href)
-      tier = row.xpath('td')[1].xpath('a/text()').get()
+      for row in box_rows:
+        competition_href = row.xpath('td')[1].xpath('a/@href').get()
+        competition_href_wo_season = re.sub(r'/saison_id/[0-9]{4}','', competition_href)
+        tier = row.xpath('td')[1].xpath('a/text()').get()
 
-      parameterized_tier = underscore(parameterize(tier))
+        parameterized_tier = underscore(parameterize(tier))
 
-      # international competitions are saved to the dynamic dict 'international_competitions' rather than "yielded"
-      # this is to avoid emitting duplicated items for international competitions, since the same competitions
-      # appear in multiple country pages 
-      self.international_competitions[parameterized_tier] = {
-        'type': 'competition',
-        'href': competition_href_wo_season,
-        'competition_type': parameterized_tier
-      }
+        # international competitions are saved to the dynamic dict 'international_competitions' rather than "yielded"
+        # this is to avoid emitting duplicated items for international competitions, since the same competitions
+        # appear in multiple country pages 
+        # appear in multiple country pages 
+        # appear in multiple country pages 
+        self.international_competitions[parameterized_tier] = {
+          'type': 'competition',
+          'href': competition_href_wo_season,
+          'competition_type': parameterized_tier
+        }
 
     for competition in competitions[parameterized_domestic_competitions_tag]:
       yield {
