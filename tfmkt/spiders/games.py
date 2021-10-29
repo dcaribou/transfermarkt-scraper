@@ -104,6 +104,7 @@ class GamesSpider(BaseSpider):
 
     stadium = self.safe_strip(venue_box.xpath('node()')[1].xpath('a/text()').get())
     attendance = self.safe_strip(venue_box.xpath('node()')[1].xpath('strong/text()').get())
+    referee = self.safe_strip(venue_box.xpath('a[contains(@href, "schiedsrichter")]/@title').get())
 
     # extract results "box" attributes
     result_box = game_box.css('div.ergebnis-wrap')
@@ -128,7 +129,8 @@ class GamesSpider(BaseSpider):
       'matchday': matchday,
       'date': date,
       'stadium': stadium,
-      'attendance': attendance
+      'attendance': attendance,
+      'referee': referee
     }
     
     yield item
