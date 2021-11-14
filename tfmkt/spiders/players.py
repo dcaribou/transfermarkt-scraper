@@ -1,7 +1,5 @@
 from tfmkt.spiders.common import BaseSpider
 from scrapy.shell import inspect_response # required for debugging
-import re
-from inflection import parameterize, underscore
 
 class PlayersSpider(BaseSpider):
   name = 'players'
@@ -14,13 +12,17 @@ class PlayersSpider(BaseSpider):
         @cb_kwargs {"parent": "dummy"}
       """
 
-      player_hrefs = response.css(
-            'a.spielprofil_tooltip::attr(href)'
-        ).getall()
+      # inspect_response(response, self)
+      # exit(1)
 
-      without_duplicates = list(set(player_hrefs))
+      players_table = response.xpath("//div[@class='responsive-table']")
+      assert len(players_table) == 1
 
-      for href in without_duplicates:
+      players_table = players_table[0]
+
+      player_hrefs = players_table.xpath("//tm-tooltip[@data-type='player']/div[1]/span/a/@href").getall()
+
+      for href in player_hrefs:
           
           cb_kwargs = {
             'base' : {

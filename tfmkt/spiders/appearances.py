@@ -1,6 +1,5 @@
 from tfmkt.spiders.common import BaseSpider
 from scrapy.shell import inspect_response # required for debugging
-import re
 from inflection import parameterize, underscore
 from urllib.parse import urlparse
 
@@ -31,6 +30,9 @@ class AppearancesSpider(BaseSpider):
     @scrapes assists competition_code date for goals href matchday minutes_played opponent parent pos red_cards result second_yellow_cards type venue yellow_cards
     """
 
+    # inspect_response(response, self)
+    # exit(1)
+
     def parse_stats_table(table):
         """Parses a table of player's statistics."""
         header_elements = [
@@ -56,6 +58,9 @@ class AppearancesSpider(BaseSpider):
 
     def parse_stats_elem(elem):
         """Parse an individual table cell"""
+
+        self.logger.debug("Prasing element: %s", elem.get())
+
         # some cells include the club classification in the national league in brackets. for example, "Leeds (10.)"
         # these are at the same time unncessary and annoying to parse, as club information can be obtained
         # from the "shield" image. identify these cells by looking for descendents of the class 'tabellenplatz'
@@ -63,27 +68,35 @@ class AppearancesSpider(BaseSpider):
         # club information is parsed from team "shields" using a separate logic from the rest
         # identify cells containing club shields
         has_shield_class = elem.css('img::attr(src)').get() is not None
-        club_href = elem.css('a.vereinprofil_tooltip::attr(href)').get()
+        # club_href = elem.css('a.vereinprofil_tooltip::attr(href)').get()
+        club_href = elem.xpath('tm-tooltip[@data-type="club"]/a/@href').get()
         result_href = elem.css('a.ergebnis-link::attr(href)').get()
-
+        
+        self.logger.debug("Extracted values: has_shield_class: %s, club_href: %s, result_href: %s", has_shield_class, club_href, result_href)
+        
         if (
             (has_classification_in_brackets and club_href is None) or
             (club_href is not None and not has_shield_class) 
             ):
+          self.logger.debug("Found club href without shield class, skipping")
           return None
         elif club_href is not None:
+          self.logger.debug("Found club href: %s", club_href)
           return {'type': 'club', 'href': club_href}
         elif result_href is not None:
+          self.logger.debug("Found result/game href: %s", result_href)
           return {'type': 'game', 'href': result_href}
         # finally, most columns can be parsed by extracting the text at the element's "last leaf"
         else:
-          return elem.xpath('string(.)').get().strip()
+          extracted_element = elem.xpath('string(.)').get().strip()
+          self.logger.debug("Extracted element: %s", extracted_element)
+          return extracted_element
 
     # stats tables are 'responsive-tables' (except the first one, which is
     # a summary table)
     competitions = response.css(
         'div.table-header > a::attr(name)'
-    ).getall()[1:]
+    ).getall()
     stats_tables = response.css('div.responsive-table')[1:]
     assert(len(competitions) == len(stats_tables))
     all_stats = {}
