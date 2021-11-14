@@ -68,7 +68,6 @@ class AppearancesSpider(BaseSpider):
         # club information is parsed from team "shields" using a separate logic from the rest
         # identify cells containing club shields
         has_shield_class = elem.css('img::attr(src)').get() is not None
-        # club_href = elem.css('a.vereinprofil_tooltip::attr(href)').get()
         club_href = elem.xpath('tm-tooltip[@data-type="club"]/a/@href').get()
         result_href = elem.css('a.ergebnis-link::attr(href)').get()
         
