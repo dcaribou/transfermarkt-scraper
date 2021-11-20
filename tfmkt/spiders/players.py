@@ -20,7 +20,7 @@ class PlayersSpider(BaseSpider):
 
       players_table = players_table[0]
 
-      player_hrefs = players_table.xpath("//tm-tooltip[@data-type='player']/div[1]/span/a/@href").getall()
+      player_hrefs = players_table.xpath('//table[@class="inline-table"]/tr[1]/td[2]/div[1]/span/a/@href').getall()
 
       for href in player_hrefs:
           
