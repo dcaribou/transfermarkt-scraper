@@ -1,5 +1,7 @@
 from tfmkt.spiders.common import BaseSpider
 from scrapy.shell import inspect_response # required for debugging
+import re
+import json
 
 class PlayersSpider(BaseSpider):
   name = 'players'
@@ -86,6 +88,20 @@ class PlayersSpider(BaseSpider):
         attributes['social_media'].append(
           href
         )
+
+    # parse historical market value
+    pattern = re.compile('\'data\'\:.*\}\}]')
+
+    d = (
+        json
+        .loads('{' + response.xpath("//script[contains(., 'series')]/text()").re(pattern)[0].replace("\'", "\"").encode().decode('unicode_escape') + '}')
+    )
+
+    for x in d['data']:
+        x['date_x'] = x.pop('x')
+        x['market_value'] = x.pop('y')
+
+    attributes['market_value_history'] = d
 
     yield {
       **base,
