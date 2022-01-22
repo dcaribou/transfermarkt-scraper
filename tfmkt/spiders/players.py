@@ -20,19 +20,19 @@ class PlayersSpider(BaseSpider):
 
       players_table = players_table[0]
 
-      player_hrefs = players_table.xpath('//table[@class="inline-table"]/tr[1]/td[2]/div[1]/span/a/@href').getall()
+      player_hrefs = players_table.xpath('//table[@class="inline-table"]/tr[1]/td[2]/a/@href').getall()
 
       for href in player_hrefs:
           
-          cb_kwargs = {
-            'base' : {
-              'type': 'player',
-              'href': href,
-              'parent': parent
-            }
+        cb_kwargs = {
+          'base' : {
+            'type': 'player',
+            'href': href,
+            'parent': parent
           }
+        }
 
-          yield response.follow(href, self.parse_details, cb_kwargs=cb_kwargs)
+        yield response.follow(href, self.parse_details, cb_kwargs=cb_kwargs)
 
   def parse_details(self, response, base):
     """Extract player details from the main page.
