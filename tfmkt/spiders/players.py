@@ -7,8 +7,8 @@ class PlayersSpider(BaseSpider):
   def parse(self, response, parent):
       """Parse clubs's page to collect all player's urls.
 
-        @url https://www.transfermarkt.co.uk/manchester-city/kader/verein/281/saison_id/2019
-        @returns requests 34 34
+        @url https://www.transfermarkt.co.uk/sc-braga/startseite/verein/1075/saison_id/2019
+        @returns requests 38 38
         @cb_kwargs {"parent": "dummy"}
       """
 
@@ -20,7 +20,7 @@ class PlayersSpider(BaseSpider):
 
       players_table = players_table[0]
 
-      player_hrefs = players_table.xpath('//table[@class="inline-table"]/tr[1]/td[2]/a/@href').getall()
+      player_hrefs = players_table.xpath('//table[@class="inline-table"]/tr[1]/td[2]/div[1]/span/a/@href').getall()
 
       for href in player_hrefs:
           
