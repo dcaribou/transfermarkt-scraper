@@ -15,7 +15,8 @@ A web scraper for collecting data from [Transfermarkt](https://www.transfermarkt
 
 Each one of these entities can be discovered and refreshed separately by invoking the corresponding crawler.
 
-## run
+## install
+
 This is a [scrapy](https://scrapy.org/) project, so it needs to be run with the
 `scrapy` command line util. A conda `environment.yml` file is provided with a definition
 for the necessary environment to run the scraper.
@@ -24,7 +25,13 @@ for the necessary environment to run the scraper.
 # create and activate conda environment
 conda env create -f environment.yml
 conda activate transfermarkt-scraper
+```
+> :information_source: On Apple silicon chips fallback rosetta to avoid well-known [pyopenssl issues](https://github.com/pyca/pyopenssl/issues/873) `CONDA_SUBDIR=osx-64 conda env create -f environment.yml`
 
+## run
+> :warning: When using this scraper please identify your project accordingly by using a custom user agent. You can pass the user agent string using the `USER_AGENT` scrapy setting. For example, `scrapy crawl players -s USER_AGENT=<your user agent> `
+
+```console
 # discover confederantions and competitions on separate invokations
 scrapy crawl confederations > confederations.json
 scrapy crawl competitions -a parents=confederations.json > competitions.json
@@ -44,11 +51,10 @@ docker run \
     dcaribou/transfermarkt-scraper:main \
     scrapy crawl competitions -a parents=samples/confederations.json
 ```
-> :warning: When using this scraper please identify your project accordingly by using a custom user agent. You can pass the user agent string using the `USER_AGENT` scrapy setting. For example, `scrapy crawl players -s USER_AGENT=<your user agent> `
- 
+
 Items are extracted in JSON format with one JSON object per item (confederation, league, club, player or appearance), which gets printed to the `stdout`. Samples of extracted data are provided in the [samples](samples) folder.
 
-Check out [transfermarkt-datasets](https://github.com/dcaribou/transfermarkt-datasets) to see `transfermarkt-scraper` in action on a real analytics project.
+Check out [transfermarkt-datasets](https://github.com/dcaribou/transfermarkt-datasets) to see `transfermarkt-scraper` in action on a real project.
 
 ## config
 Check [setting.py](tfmkt/settings.py) for a reference of available configuration options
