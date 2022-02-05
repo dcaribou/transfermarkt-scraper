@@ -21,7 +21,7 @@ jobs:
     - uses: conda-incubator/setup-miniconda@v2
       with:
         environment-file: environment.yml
-        activate-environment: transfermarkt-datasets
+        activate-environment: transfermarkt-scraper
     - name: Check scrapy contracts
       run: |
         scrapy check -s USER_AGENT='transfermarkt scrapy contracts'
