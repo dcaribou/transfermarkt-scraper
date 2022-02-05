@@ -26,10 +26,10 @@ for the necessary environment to run the scraper.
 conda env create -f environment.yml
 conda activate transfermarkt-scraper
 ```
-> :information_source: On Apple silicon chips fallback rosetta to avoid well-known [pyopenssl issues](https://github.com/pyca/pyopenssl/issues/873) `CONDA_SUBDIR=osx-64 conda env create -f environment.yml`
+> :information_source: On Apple silicon chips fallback to rosetta to avoid well-known [pyopenssl issues](https://github.com/pyca/pyopenssl/issues/873) by creating your conda environment as `CONDA_SUBDIR=osx-64 conda env create -f environment.yml`
 
 ## run
-> :warning: When using this scraper please identify your project accordingly by using a custom user agent. You can pass the user agent string using the `USER_AGENT` scrapy setting. For example, `scrapy crawl players -s USER_AGENT=<your user agent> `
+> :warning: When using this scraper please identify your project accordingly by passing the user agent string using the `USER_AGENT` scrapy setting. For example, `scrapy crawl players -s USER_AGENT=<your user agent> `
 
 ```console
 # discover confederantions and competitions on separate invokations
