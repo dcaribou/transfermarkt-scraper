@@ -75,7 +75,7 @@ class PlayersSpider(BaseSpider):
     attributes['contract_expires'] = self.safe_strip(response.xpath("//span[text()='Contract expires:']/following::span[1]/text()").get())
     attributes['day_of_last_contract_extension'] = response.xpath("//span[text()='Date of last contract extension:']/following::span[1]/text()").get()
     attributes['outfitter'] = response.xpath("//span[text()='Outfitter:']/following::span[1]/text()").get()
-    attributes['current_market_value'] = self.safe_strip(response.xpath("//div[@class='marktwertentwicklung']//div[@class='zeile-oben']//div[@class='right-td']//a/text()").get())
+    attributes['current_market_value'] = self.safe_strip(response.xpath("//div[contains(@class, 'right-td')]/text()").get())
     attributes['highest_market_value'] = self.safe_strip(response.xpath("//div[@class='marktwertentwicklung']//div[@class='zeile-unten']//div[@class='right-td']//text()").get())
 
     social_media_value_node = response.xpath("//span[text()='Social-Media:']/following::span[1]")
