@@ -38,7 +38,7 @@ class PlayersSpider(BaseSpider):
     """Extract player details from the main page.
     It currently only parses the PLAYER DATA section.
 
-      @url https://www.transfermarkt.co.uk/joel-mumbongo/profil/spieler/381156
+      @url https://www.transfermarkt.co.uk/steven-berghuis/profil/spieler/129554
       @returns items 1 1
       @cb_kwargs {"base": {"href": "some_href", "type": "player", "parent": {}}}
       @scrapes href type parent
@@ -75,7 +75,11 @@ class PlayersSpider(BaseSpider):
     attributes['contract_expires'] = self.safe_strip(response.xpath("//span[text()='Contract expires:']/following::span[1]/text()").get())
     attributes['day_of_last_contract_extension'] = response.xpath("//span[text()='Date of last contract extension:']/following::span[1]/text()").get()
     attributes['outfitter'] = response.xpath("//span[text()='Outfitter:']/following::span[1]/text()").get()
-    attributes['current_market_value'] = self.safe_strip(response.xpath("//div[contains(@class, 'right-td')]/text()").get())
+    
+    current_market_value_match = self.safe_strip(response.xpath("//div[contains(@class, 'right-td')]/text()").get())
+    if not current_market_value_match: # sometimes the actual text value is one level below
+      current_market_value_match = self.safe_strip(response.xpath("//div[contains(@class, 'right-td')]/a/text()").get())
+    attributes['current_market_value'] = current_market_value_match
     attributes['highest_market_value'] = self.safe_strip(response.xpath("//div[@class='marktwertentwicklung']//div[@class='zeile-unten']//div[@class='right-td']//text()").get())
 
     social_media_value_node = response.xpath("//span[text()='Social-Media:']/following::span[1]")
