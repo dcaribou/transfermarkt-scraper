@@ -41,7 +41,7 @@ class PlayersSpider(BaseSpider):
     """Extract player details from the main page.
     It currently only parses the PLAYER DATA section.
 
-      @url https://www.transfermarkt.co.uk/harvey-davies/profil/spieler/706815
+      @url https://www.transfermarkt.co.uk/steven-berghuis/profil/spieler/129554
       @returns items 1 1
       @cb_kwargs {"base": {"href": "some_href", "type": "player", "parent": {}}}
       @scrapes href type parent
