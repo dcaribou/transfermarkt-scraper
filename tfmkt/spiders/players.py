@@ -1,5 +1,8 @@
 from tfmkt.spiders.common import BaseSpider
+from scrapy.shell import Response
 from scrapy.shell import inspect_response # required for debugging
+import re
+import json
 
 class PlayersSpider(BaseSpider):
   name = 'players'
@@ -51,6 +54,7 @@ class PlayersSpider(BaseSpider):
     # exit(1)
 
     # parse 'PLAYER DATA' section
+
     attributes = {}
 
     attributes['name_in_home_country'] = response.xpath("//span[text()='Name in home country:']/following::span[1]/text()").get()
@@ -91,7 +95,25 @@ class PlayersSpider(BaseSpider):
           href
         )
 
+    # parse historical market value from figure
+    attributes['market_value_history'] = self.parse_market_history(response)
+
     yield {
       **base,
       **attributes
     }
+
+  def parse_market_history(self, response: Response):
+    """
+    Parse player's market history from the graph
+    """
+    pattern = re.compile('\'data\'\:.*\}\}]')
+
+    try:
+      parsed_script = json.loads(
+        '{' + response.xpath("//script[contains(., 'series')]/text()").re(pattern)[0].replace("\'", "\"").encode().decode('unicode_escape') + '}'
+      )
+      return parsed_script["data"]
+    except Exception as err:
+      self.logger.warning("Failed to scrape market value history from %s", response.url)
+      return None
