@@ -1,4 +1,5 @@
 from tfmkt.spiders.common import BaseSpider
+from scrapy.shell import Response
 from scrapy.shell import inspect_response # required for debugging
 import re
 import json
@@ -40,7 +41,7 @@ class PlayersSpider(BaseSpider):
     """Extract player details from the main page.
     It currently only parses the PLAYER DATA section.
 
-      @url https://www.transfermarkt.co.uk/steven-berghuis/profil/spieler/129554
+      @url https://www.transfermarkt.co.uk/harvey-davies/profil/spieler/706815
       @returns items 1 1
       @cb_kwargs {"base": {"href": "some_href", "type": "player", "parent": {}}}
       @scrapes href type parent
@@ -53,6 +54,7 @@ class PlayersSpider(BaseSpider):
     # exit(1)
 
     # parse 'PLAYER DATA' section
+
     attributes = {}
 
     attributes['name_in_home_country'] = response.xpath("//span[text()='Name in home country:']/following::span[1]/text()").get()
@@ -93,21 +95,25 @@ class PlayersSpider(BaseSpider):
           href
         )
 
-    # parse historical market value
-    pattern = re.compile('\'data\'\:.*\}\}]')
-
-    d = (
-        json
-        .loads('{' + response.xpath("//script[contains(., 'series')]/text()").re(pattern)[0].replace("\'", "\"").encode().decode('unicode_escape') + '}')
-    )
-
-    for x in d['data']:
-        x['date_x'] = x.pop('x')
-        x['market_value'] = x.pop('y')
-
-    attributes['market_value_history'] = d
+    # parse historical market value from figure
+    attributes['market_value_history'] = self.parse_market_history(response)
 
     yield {
       **base,
       **attributes
     }
+
+  def parse_market_history(self, response: Response):
+    """
+    Parse player's market history from the graph
+    """
+    pattern = re.compile('\'data\'\:.*\}\}]')
+
+    try:
+      parsed_script = json.loads(
+        '{' + response.xpath("//script[contains(., 'series')]/text()").re(pattern)[0].replace("\'", "\"").encode().decode('unicode_escape') + '}'
+      )
+      return parsed_script["data"]
+    except Exception as err:
+      self.logger.warning("Failed to scrape market value history from %s", response.url)
+      return None
