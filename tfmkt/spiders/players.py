@@ -79,12 +79,14 @@ class PlayersSpider(BaseSpider):
     attributes['contract_expires'] = self.safe_strip(response.xpath("//span[text()='Contract expires:']/following::span[1]/text()").get())
     attributes['day_of_last_contract_extension'] = response.xpath("//span[text()='Date of last contract extension:']/following::span[1]/text()").get()
     attributes['outfitter'] = response.xpath("//span[text()='Outfitter:']/following::span[1]/text()").get()
-    
-    current_market_value_match = self.safe_strip(response.xpath("//div[contains(@class, 'right-td')]/text()").get())
-    if not current_market_value_match: # sometimes the actual text value is one level below
-      current_market_value_match = self.safe_strip(response.xpath("//div[contains(@class, 'right-td')]/a/text()").get())
-    attributes['current_market_value'] = current_market_value_match
-    attributes['highest_market_value'] = self.safe_strip(response.xpath("//div[@class='marktwertentwicklung']//div[@class='zeile-unten']//div[@class='right-td']//text()").get())
+
+    current_market_value_text = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__current-value']/text()").get())
+    current_market_value_link = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__current-value']/a/text()").get())
+    if current_market_value_text: # sometimes the actual value is in the same level (https://www.transfermarkt.co.uk/femi-seriki/profil/spieler/638649)
+      attributes['current_market_value'] = current_market_value_text
+    else: # sometimes is one level down (https://www.transfermarkt.co.uk/rhys-norrington-davies/profil/spieler/543164)
+      attributes['current_market_value'] = current_market_value_link
+    attributes['highest_market_value'] = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__max-value']/text()").get())
 
     social_media_value_node = response.xpath("//span[text()='Social-Media:']/following::span[1]")
     if len(social_media_value_node) > 0:
