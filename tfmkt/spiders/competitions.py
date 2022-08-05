@@ -57,8 +57,8 @@ class CompetitionsSpider(BaseSpider):
   def parse_competitions(self, response, base):
     """Parse competitions from the country competitions page.
 
-    @url https://www.transfermarkt.co.uk/wettbewerbe/national/wettbewerbe/189
-    @returns items 3 3
+    @url https://www.transfermarkt.co.uk/wettbewerbe/national/wettbewerbe/157
+    @returns items 2 2
     @cb_kwargs {"base": {"href": "some_href/3", "type": "competition", "parent": {}, "country_id": 1, "country_name": "n", "country_code": "CC"}}
     @scrapes type href parent country_id country_name country_code competition_type
     """
@@ -132,8 +132,6 @@ class CompetitionsSpider(BaseSpider):
         # international competitions are saved to the dynamic dict 'international_competitions' rather than "yielded"
         # this is to avoid emitting duplicated items for international competitions, since the same competitions
         # appear in multiple country pages 
-        # appear in multiple country pages 
-        # appear in multiple country pages 
         self.international_competitions[parameterized_tier] = {
           'type': 'competition',
           'href': competition_href_wo_season,
@@ -160,4 +158,4 @@ class CompetitionsSpider(BaseSpider):
         **self.international_competitions[key]
       }
 
-      print(json.dumps(competition))
+      print(json.dumps(competition)) # TODO: this needs to be yielded too!
