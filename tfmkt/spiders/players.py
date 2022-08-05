@@ -71,6 +71,7 @@ class PlayersSpider(BaseSpider):
       'href': response.xpath("//span[text()='Player agent:']/following::span[1]/a/@href").get(),
       'name': response.xpath("//span[text()='Player agent:']/following::span[1]/a/text()").get()
     }
+    attributes['image_url'] = response.xpath("//img[@class='data-header__profile-image']/@src").get()
     attributes['current_club'] = {
       'href': response.xpath("//span[contains(text(),'Current club:')]/following::span[1]/a/@href").get()
     }
