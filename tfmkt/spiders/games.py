@@ -65,10 +65,10 @@ class GamesSpider(BaseSpider):
   def parse_game(self, response, base):
     """Parse games and fixutres page. From this page follow to each game page.
 
-    @url https://www.transfermarkt.co.uk/caykur-rizespor_fenerbahce-sk/index/spielbericht/3426662
+    @url https://www.transfermarkt.co.uk/spielbericht/index/spielbericht/3098550
     @returns items 1 1
     @cb_kwargs {"base": {"href": "some_href/3", "type": "league", "parent": {}}}
-    @scrapes type href parent game_id result matchday date stadium attendance
+    @scrapes type href parent game_id result matchday date stadium attendance home_manager away_manager
     """
 
     # inspect_response(response, self)
@@ -111,6 +111,11 @@ class GamesSpider(BaseSpider):
 
     result = self.safe_strip(result_box.css('div.sb-endstand::text').get())
 
+    # extract from line-ups "box"
+    manager_names = response.xpath(
+        "//tr[(contains(td/b/text(),'Manager')) or (contains(td/div/text(),'Manager'))]/td[2]/a/text()"
+      ).getall()
+
     item = {
       **base,
       'type': 'game',
@@ -132,6 +137,15 @@ class GamesSpider(BaseSpider):
       'attendance': attendance,
       'referee': referee
     }
+
+    if len(manager_names) == 2:
+      home_manager_name, away_manager_name = manager_names
+      item["home_manager"] = {
+        'name': home_manager_name
+      }
+      item["away_manager"] = {
+        'name': away_manager_name
+      }
     
     yield item
  
