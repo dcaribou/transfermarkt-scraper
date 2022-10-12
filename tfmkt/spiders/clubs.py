@@ -56,6 +56,12 @@ class ClubsSpider(BaseSpider):
       @scrapes href type parent
     """
 
+    # uncommenting the two lines below will open a scrapy shell with the context of this request
+    # when you run the crawler. this is useful for developing new extractors
+
+    # inspect_response(response, self)
+    # exit(1)
+
     attributes = {}
 
     # parsing of "dataMarktwert" section
@@ -64,30 +70,35 @@ class ClubsSpider(BaseSpider):
 
     # parsing of "dataContent" section
 
-    squad_size_element = response.xpath('//p[span[@class="dataItem"] = "Squad size:"]')[0]
-    attributes['squad_size'] = squad_size_element.xpath('span[@class="dataValue"]/text()').get()
-
-    average_age_element = response.xpath('//p[span[@class="dataItem"] = "Average age:"]')[0]
-    attributes['average_age'] = average_age_element.xpath('span[@class="dataValue"]/text()').get()
-
-    foreigners_element = response.xpath('//p[span[@class="dataItem"] = " Foreigners:"]')[0]
-    attributes['foreigners_number'] = foreigners_element.xpath('span[@class="dataValue"]/a/text()').get()
-    attributes['foreigners_percentage'] = foreigners_element.xpath('span[@class="dataValue"]/span/text()').get()
-
-    national_team_players_element = response.xpath('//p[span[@class="dataItem"] = "National team players:"]')[0]
-    attributes['national_team_players'] = (
-      national_team_players_element
-        .xpath('span[@class="dataValue"]/a/text()')
-        .get()
-        
+    attributes['squad_size'] = self.safe_strip(
+      response.xpath("//li[contains(text(),'Squad size:')]/span/text()").get()
     )
 
-    stadium_element = response.xpath('//p[span[@class="dataItem"] = "Stadium:"]')[0]
-    attributes['stadium_name'] = stadium_element.xpath('span[@class="dataValue"]/a/text()').get()
-    attributes['stadium_seats'] = stadium_element.xpath('span[@class="dataValue"]/span/text()').get()
+    attributes['average_age'] = self.safe_strip(
+      response.xpath("//li[contains(text(),'Average age:')]/span/text()").get()
+    )
+    
+    foreigners_element = response.xpath("//li[contains(text(),'Foreigners:')]")[0]
+    attributes['foreigners_number'] = self.safe_strip(foreigners_element.xpath("span/a/text()").get())
+    attributes['foreigners_percentage'] = self.safe_strip(
+      foreigners_element.xpath("span/span/text()").get()
+    )
 
-    transfer_record_element = response.xpath('//p[span[@class="dataItem"] = "Current transfer record:"]')[0]
-    attributes['net_transfer_record'] = transfer_record_element.xpath('span[@class="dataValue"]/span/a/text()').get()
+    attributes['national_team_players'] = self.safe_strip(
+      response.xpath("//li[contains(text(),'National team players:')]/span/a/text()").get()
+    )
+
+    stadium_element = response.xpath("//li[contains(text(),'Stadium:')]")[0]
+    attributes['stadium_name'] = self.safe_strip(
+      stadium_element.xpath("span/a/text()").get()
+    )
+    attributes['stadium_seats'] = self.safe_strip(
+      stadium_element.xpath("span/span/text()").get()
+    )
+
+    attributes['net_transfer_record'] = self.safe_strip(
+      response.xpath("//li[contains(text(),'Current transfer record:')]/span/span/a/text()").get()
+    )
 
     # inspect_response(response,self)
     # parsing of "Coach for the season"
