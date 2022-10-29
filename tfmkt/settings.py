@@ -4,10 +4,6 @@ BOT_NAME = 'tfmkt'
 SPIDER_MODULES = ['tfmkt.spiders']
 NEWSPIDER_MODULE = 'tfmkt.spiders'
 
-
-# Default season to scrape
-SEASON = 2020
-
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
 

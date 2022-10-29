@@ -31,13 +31,15 @@ conda activate transfermarkt-scraper
 ## run
 > :warning: When using this scraper please identify your project accordingly by passing the user agent string using the `USER_AGENT` scrapy setting. For example, `scrapy crawl players -s USER_AGENT=<your user agent> `
 
+These are some usage examples for how the scraper may be run.
+
 ```console
 # discover confederantions and competitions on separate invokations
 scrapy crawl confederations > confederations.json
 scrapy crawl competitions -a parents=confederations.json > competitions.json
 
 # you can use intermediate files or pipe crawlers one after the other to traverse the hierarchy 
-cat competitions | head -2 \
+cat competitions.json | head -2 \
     | scrapy crawl clubs \
     | scrapy crawl players \
     | scrapy crawl appearances
@@ -52,9 +54,13 @@ docker run \
     scrapy crawl competitions -a parents=samples/confederations.json
 ```
 
-Items are extracted in JSON format with one JSON object per item (confederation, league, club, player or appearance), which gets printed to the `stdout`. Samples of extracted data are provided in the [samples](samples) folder.
+Items are extracted in JSON format with one JSON object per item (confederation, league, club, player or appearance), which get printed to the `stdout`. Samples of extracted data are provided in the [samples](samples) folder.
 
 Check out [transfermarkt-datasets](https://github.com/dcaribou/transfermarkt-datasets) to see `transfermarkt-scraper` in action on a real project.
+
+### arguments
+- `parents`: Crawler "parents" are either a file or a piped output with the parent entities. For example, `competitions` is parent of `clubs`, which in turn is a parent of `players`.
+- `season`: The season that the crawler is to run for. It defaults to the most recent season.
 
 ## config
 Check [setting.py](tfmkt/settings.py) for a reference of available configuration options

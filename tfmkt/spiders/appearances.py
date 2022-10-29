@@ -14,7 +14,7 @@ class AppearancesSpider(BaseSpider):
     @cb_kwargs {"parent": "dummy"}
     """
 
-    season = self.settings['SEASON']
+    season = self.season
 
     full_stats_href = response.xpath('//a[contains(text(),"View full stats")]/@href').get()
     seasoned_full_stats_href = full_stats_href + f"/plus/0?saison={season}"

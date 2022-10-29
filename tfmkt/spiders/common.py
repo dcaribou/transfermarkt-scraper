@@ -9,7 +9,7 @@ import re
 default_base_url = 'https://www.transfermarkt.co.uk'
 
 class BaseSpider(scrapy.Spider):
-  def __init__(self, base_url=None, parents=None):
+  def __init__(self, base_url=None, parents=None, season=None):
 
     if base_url is not None:
       self.base_url = base_url
@@ -29,6 +29,11 @@ class BaseSpider(scrapy.Spider):
     for parent in parents:
       if parent.get('parent') is not None:
         del parent['parent']
+
+    if season:
+      self.season = season
+    else:
+      self.season = 2022
 
     self.entrypoints = parents
 
@@ -62,7 +67,7 @@ class BaseSpider(scrapy.Spider):
 
   def seasonize_entrypoin_href(self, item):
 
-    season = self.settings['SEASON']
+    season = self.season
 
     if item['type'] == 'club':
       seasonized_href = f"{self.base_url}{item['href']}/saison_id/{season}"
