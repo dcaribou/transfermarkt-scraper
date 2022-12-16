@@ -35,14 +35,14 @@ These are some usage examples for how the scraper may be run.
 
 ```console
 # discover confederantions and competitions on separate invokations
-scrapy crawl confederations > confederations.json
-scrapy crawl competitions -a parents=confederations.json > competitions.json
+scrapy crawl confederations > confederations.json -s USER_AGENT=<your user agent>
+scrapy crawl competitions -a parents=confederations.json > competitions.json -s USER_AGENT=<your user agent>
 
 # you can use intermediate files or pipe crawlers one after the other to traverse the hierarchy 
 cat competitions.json | head -2 \
-    | scrapy crawl clubs \
-    | scrapy crawl players \
-    | scrapy crawl appearances
+    | scrapy crawl clubs -s USER_AGENT=<your user agent> \ 
+    | scrapy crawl players -s USER_AGENT=<your user agent> \
+    | scrapy crawl appearances -s USER_AGENT=<your user agent>
 ```
 
 Alternatively you can also use [`dcaribou/transfermarkt-scraper`](https://hub.docker.com/repository/docker/dcaribou/transfermarkt-scraper) docker image
