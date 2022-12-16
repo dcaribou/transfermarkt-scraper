@@ -15,7 +15,7 @@ A web scraper for collecting data from [Transfermarkt](https://www.transfermarkt
 
 Each one of these entities can be discovered and refreshed separately by invoking the corresponding crawler.
 
-## install
+## Installation
 
 This is a [scrapy](https://scrapy.org/) project, so it needs to be run with the
 `scrapy` command line util. A conda `environment.yml` file is provided with a definition
@@ -28,8 +28,11 @@ conda activate transfermarkt-scraper
 ```
 > :information_source: On Apple silicon chips fallback to rosetta to avoid well-known [pyopenssl issues](https://github.com/pyca/pyopenssl/issues/873) by creating your conda environment as `CONDA_SUBDIR=osx-64 conda env create -f environment.yml`
 
-## run
-> :warning: When using this scraper please identify your project accordingly by passing the user agent string using the `USER_AGENT` scrapy setting. For example, `scrapy crawl players -s USER_AGENT=<your user agent> `
+> :warning: This project will not run without a user agent string being set. This can be done one of two ways:
+> - add `ROBOTSTXT_USER_AGENT = <your user agent>` to your tfmkt/settings.py file, or
+> - specify the user agent token in the command line request (for example, `scrapy crawl players -s USER_AGENT=<your user agent> `)
+
+## Usage
 
 These are some usage examples for how the scraper may be run.
 
