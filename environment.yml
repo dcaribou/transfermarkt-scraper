@@ -1,9 +1,0 @@
-name: transfermarkt-scraper
-channels:
-  - defaults
-dependencies:
-  - python=3.8
-  - scrapy==2.4.1
-  - inflection
-  - protego
-  - python-dateutil
