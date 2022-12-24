@@ -1,14 +1,16 @@
-FROM continuumio/miniconda3
+FROM python:3.8
 
 WORKDIR /app
 
-# The code to run when container is started:
-COPY tfmkt tfmkt
-COPY scrapy.cfg .
+RUN apt-get update && \
+    apt-get -y install gcc python3-dev
 
-# Create the environment:
-COPY environment.yml .
-RUN conda env create -f environment.yml
+COPY pyproject.toml /app
 
-ENV PATH /opt/conda/envs/transfermarkt-scraper/bin:$PATH
-RUN /bin/bash -c "source activate transfermarkt-scraper"
+ENV PYTHONPATH=${PYTHONPATH}:${PWD}
+
+RUN pip3 install poetry
+RUN poetry config virtualenvs.create false
+RUN poetry install --no-dev
+
+RUN /bin/bash -c "poetry shell"
