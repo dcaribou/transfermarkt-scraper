@@ -6,6 +6,8 @@ RUN apt-get update && \
     apt-get -y install gcc python3-dev
 
 COPY pyproject.toml /app
+COPY tfmkt tfmkt
+COPY scrapy.cfg .
 
 ENV PYTHONPATH=${PYTHONPATH}:${PWD}
 
