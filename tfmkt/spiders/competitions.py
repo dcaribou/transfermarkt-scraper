@@ -81,7 +81,7 @@ class CompetitionsSpider(BaseSpider):
     relevant_boxes = {}
 
     for box in boxes:
-      box_header = box.css('div.table-header h2::text').get()
+      box_header = self.safe_strip(box.css('h2.content-box-headline::text').get())
       if box_header in [
           domestic_competitions_tag,
           international_competitions_tag
