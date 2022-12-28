@@ -44,7 +44,7 @@ class PlayersSpider(BaseSpider):
       @url https://www.transfermarkt.co.uk/steven-berghuis/profil/spieler/129554
       @returns items 1 1
       @cb_kwargs {"base": {"href": "some_href", "type": "player", "parent": {}}}
-      @scrapes href type parent
+      @scrapes href type parent name last_name number
     """
 
     # uncommenting the two lines below will open a scrapy shell with the context of this request
@@ -56,6 +56,11 @@ class PlayersSpider(BaseSpider):
     # parse 'PLAYER DATA' section
 
     attributes = {}
+
+    name_element = response.xpath("//h1[@class='data-header__headline-wrapper']")
+    attributes["name"] = self.safe_strip("".join(name_element.xpath("text()").getall()).strip())
+    attributes["last_name"] = self.safe_strip(name_element.xpath("strong/text()").get())
+    attributes["number"] = self.safe_strip(name_element.xpath("span/text()").get())
 
     attributes['name_in_home_country'] = response.xpath("//span[text()='Name in home country:']/following::span[1]/text()").get()
     attributes['date_of_birth'] = response.xpath("//span[text()='Date of birth:']/following::span[1]//text()").get()
