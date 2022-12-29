@@ -1,6 +1,7 @@
 from tfmkt.spiders.common import BaseSpider
 from scrapy.shell import inspect_response # required for debugging
 import re
+from tfmkt.utils import background_position_in_px_to_minute
 
 class GamesSpider(BaseSpider):
   name = 'games'
@@ -62,6 +63,7 @@ class GamesSpider(BaseSpider):
 
       yield response.follow(href, self.parse_game, cb_kwargs=cb_kwargs)
 
+
   def extract_game_events(self, response, event_type):
     event_elements = response.xpath(
       f"//div[./h2/@class = 'content-box-headline' and normalize-space(./h2/text()) = '{event_type}']//div[@class='sb-aktion']"
@@ -71,7 +73,23 @@ class GamesSpider(BaseSpider):
     for e in event_elements:
       event = {}
       event["type"] = event_type
-      event["minute"] = e.xpath("./div[1]/span[@class='sb-sprite-uhr-klein']/@style").get()
+      background_position_match = re.match(
+        "background-position: ([-+]?[0-9]+)px ([-+]?[0-9]+)px;",
+        e.xpath("./div[1]/span[@class='sb-sprite-uhr-klein']/@style").get()
+      )
+      event["minute"] = background_position_in_px_to_minute(
+        int(background_position_match.group(1)),
+        int(background_position_match.group(2)),
+      )
+      extra_minute_text = self.safe_strip(
+        e.xpath("./div[1]/span[@class='sb-sprite-uhr-klein']/text()").get()
+      )
+      if len(extra_minute_text) <= 1:
+        extra_minute = None
+      else:
+        extra_minute = int(extra_minute_text)
+
+      event["extra"] = extra_minute
       event["player"] = {
         "href": e.xpath("./div[@class = 'sb-aktion-spielerbild']/a/@href").get()
       }
