@@ -1,6 +1,7 @@
 from tfmkt.spiders.common import BaseSpider
 from scrapy.shell import inspect_response # required for debugging
 import re
+from tfmkt.utils import background_position_in_px_to_minute
 
 class GamesSpider(BaseSpider):
   name = 'games'
@@ -62,6 +63,57 @@ class GamesSpider(BaseSpider):
 
       yield response.follow(href, self.parse_game, cb_kwargs=cb_kwargs)
 
+
+  def extract_game_events(self, response, event_type):
+    event_elements = response.xpath(
+      f"//div[./h2/@class = 'content-box-headline' and normalize-space(./h2/text()) = '{event_type}']//div[@class='sb-aktion']"
+    )
+
+    events = []
+    for e in event_elements:
+      event = {}
+      event["type"] = event_type
+      background_position_match = re.match(
+        "background-position: ([-+]?[0-9]+)px ([-+]?[0-9]+)px;",
+        e.xpath("./div[1]/span[@class='sb-sprite-uhr-klein']/@style").get()
+      )
+      event["minute"] = background_position_in_px_to_minute(
+        int(background_position_match.group(1)),
+        int(background_position_match.group(2)),
+      )
+      extra_minute_text = self.safe_strip(
+        e.xpath("./div[1]/span[@class='sb-sprite-uhr-klein']/text()").get()
+      )
+      if len(extra_minute_text) <= 1:
+        extra_minute = None
+      else:
+        extra_minute = int(extra_minute_text)
+
+      event["extra"] = extra_minute
+      event["player"] = {
+        "href": e.xpath("./div[@class = 'sb-aktion-spielerbild']/a/@href").get()
+      }
+      event["club"] = {
+        "name": e.xpath("./div[@class = 'sb-aktion-wappen']/a/@title").get(),
+        "href": e.xpath("./div[@class = 'sb-aktion-wappen']/a/@href").get()
+      }
+
+      action_element = e.xpath("./div[@class = 'sb-aktion-aktion']")
+      event["action"] = {
+        "result": self.safe_strip(
+          e.xpath("./div[@class = 'sb-aktion-spielstand']/b/text()").get()
+        ),
+        "description": self.safe_strip(
+          action_element.xpath("./text()").getall()[1]
+        ),
+        "player_in": {
+          "href": action_element.xpath(".//div/a/@href").get()
+        }
+      }
+      events.append(event)
+
+    return events
+
   def parse_game(self, response, base):
     """Parse games and fixutres page. From this page follow to each game page.
 
@@ -116,6 +168,11 @@ class GamesSpider(BaseSpider):
         "//tr[(contains(td/b/text(),'Manager')) or (contains(td/div/text(),'Manager'))]/td[2]/a/text()"
       ).getall()
 
+    game_events = (
+      self.extract_game_events(response, event_type="Goals") +
+      self.extract_game_events(response, event_type="Substitutions")
+    )
+
     item = {
       **base,
       'type': 'game',
@@ -135,7 +192,8 @@ class GamesSpider(BaseSpider):
       'date': date,
       'stadium': stadium,
       'attendance': attendance,
-      'referee': referee
+      'referee': referee,
+      'events': game_events
     }
 
     if len(manager_names) == 2:
