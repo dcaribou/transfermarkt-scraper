@@ -7,10 +7,10 @@ packages = [{include = "tfmkt"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-scrapy = "^2.4.1"
 inflection = "^0.5.1"
 Protego = "^0.2.1"
 python-dateutil = "^2.8.2"
+Scrapy = "2.7.1"
 
 [tool.poetry.dev-dependencies]
 
