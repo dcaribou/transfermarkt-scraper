@@ -25,9 +25,9 @@ class CompetitionsSpider(BaseSpider):
     # inspect_response(response, self)
     # exit(1)
 
-    table_rows = response.css('table.items tbody').xpath('tr')
+    table_rows = response.css('table.items tbody tr.odd, table.items tbody tr.even')
 
-    for row in table_rows[1:]:
+    for row in table_rows[0:]:
       country_image_url = row.xpath('td')[1].css('img::attr(src)').get()
       country_name = row.xpath('td')[1].css('img::attr(title)').get()
       country_code = (
