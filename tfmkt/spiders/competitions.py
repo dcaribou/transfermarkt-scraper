@@ -27,7 +27,7 @@ class CompetitionsSpider(BaseSpider):
 
     table_rows = response.css('table.items tbody tr.odd, table.items tbody tr.even')
 
-    for row in table_rows[1:]:
+    for row in table_rows[0:]:
       country_image_url = row.xpath('td')[1].css('img::attr(src)').get()
       country_name = row.xpath('td')[1].css('img::attr(title)').get()
       country_code = (
@@ -58,7 +58,7 @@ class CompetitionsSpider(BaseSpider):
     """Parse competitions from the country competitions page.
 
     @url https://www.transfermarkt.co.uk/wettbewerbe/national/wettbewerbe/157
-    @returns items 2 2
+    @returns items 3 3
     @cb_kwargs {"base": {"href": "some_href/3", "type": "competition", "parent": {}, "country_id": 1, "country_name": "n", "country_code": "CC"}}
     @scrapes type href parent country_id country_name country_code competition_type
     """
