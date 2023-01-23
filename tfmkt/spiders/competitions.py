@@ -38,6 +38,13 @@ class CompetitionsSpider(BaseSpider):
             .split('/')[-1]
         )
 
+      total_clubs = row.css('td:nth-of-type(3)::text').get()
+      total_players = row.css('td:nth-of-type(4)::text').get()
+      average_age = row.css('td:nth-of-type(5)::text').get()
+      foreigner_percentage = row.css('td:nth-of-type(6) a::text').get()
+
+      total_value = row.css('td:nth-of-type(8)::text').get()
+
       matches = re.search('([0-9]+)\.png', country_image_url, re.IGNORECASE)
       country_id = matches.group(1)
 
@@ -48,7 +55,12 @@ class CompetitionsSpider(BaseSpider):
           'parent': parent,
           'country_id': country_id,
           'country_name': country_name,
-          'country_code': country_code
+          'country_code': country_code,
+          'total_clubs': total_clubs,
+          'total_players': total_players,
+          'average_age': average_age,
+          'foreigner_percentage': foreigner_percentage,
+          'total_value': total_value
         }
       }
 
