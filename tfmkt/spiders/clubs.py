@@ -1,6 +1,8 @@
 from tfmkt.spiders.common import BaseSpider
-from scrapy.shell import inspect_response # required for debugging
+from urllib.parse import unquote, urlparse
 import re
+
+from scrapy.shell import inspect_response # required for debugging
 
 class ClubsSpider(BaseSpider):
   name = 'clubs'
@@ -52,7 +54,7 @@ class ClubsSpider(BaseSpider):
 
       @url https://www.transfermarkt.co.uk/fc-bayern-munchen/startseite/verein/27
       @returns items 1 1
-      @cb_kwargs {"base": {"href": "some_href", "type": "club", "parent": {}}}
+      @cb_kwargs {"base": {"base": "some_href", "type": "club", "parent": {}}}
       @scrapes href type parent
     """
 
@@ -100,13 +102,18 @@ class ClubsSpider(BaseSpider):
       response.xpath("//li[contains(text(),'Current transfer record:')]/span/span/a/text()").get()
     )
 
-    # inspect_response(response,self)
     # parsing of "Coach for the season"
     attributes['coach_name'] = (
       response
         .xpath('//div[contains(@data-viewport, "Mitarbeiter")]//div[@class="container-hauptinfo"]/a/text()')
         .get()
         
+    )
+    
+    
+    attributes['code'] = unquote(urlparse(base["href"]).path.split("/")[1])
+    attributes['name'] = self.safe_strip(
+       response.xpath("//span[@itemprop='legalName']/text()").get()
     )
 
     for key, value in attributes.items():

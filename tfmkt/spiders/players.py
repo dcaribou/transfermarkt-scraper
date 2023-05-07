@@ -1,6 +1,7 @@
 from tfmkt.spiders.common import BaseSpider
 from scrapy.shell import Response
 from scrapy.shell import inspect_response # required for debugging
+from urllib.parse import unquote, urlparse
 import re
 import json
 
@@ -105,6 +106,8 @@ class PlayersSpider(BaseSpider):
 
     # parse historical market value from figure
     attributes['market_value_history'] = self.parse_market_history(response)
+
+    attributes['code'] = unquote(urlparse(base["href"]).path.split("/")[1])
 
     yield {
       **base,
