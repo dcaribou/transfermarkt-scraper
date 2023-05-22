@@ -44,7 +44,7 @@ class PlayersSpider(BaseSpider):
 
       @url https://www.transfermarkt.co.uk/steven-berghuis/profil/spieler/129554
       @returns items 1 1
-      @cb_kwargs {"base": {"href": "some_href", "type": "player", "parent": {}}}
+      @cb_kwargs {"base": {"href": "some_href/code", "type": "player", "parent": {}}}
       @scrapes href type parent name last_name number
     """
 

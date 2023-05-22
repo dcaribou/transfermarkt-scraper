@@ -54,7 +54,7 @@ class ClubsSpider(BaseSpider):
 
       @url https://www.transfermarkt.co.uk/fc-bayern-munchen/startseite/verein/27
       @returns items 1 1
-      @cb_kwargs {"base": {"base": "some_href", "type": "club", "parent": {}}}
+      @cb_kwargs {"base": {"href": "some_href/path/to/code", "type": "club", "parent": {}}}
       @scrapes href type parent
     """
 
