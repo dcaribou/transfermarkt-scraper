@@ -114,6 +114,8 @@ class ClubsSpider(BaseSpider):
     attributes['code'] = unquote(urlparse(base["href"]).path.split("/")[1])
     attributes['name'] = self.safe_strip(
        response.xpath("//span[@itemprop='legalName']/text()").get()
+    ) or self.safe_strip(
+       response.xpath('//h1[@class="data-header__headline-wrapper data-header__headline-wrapper--oswald"]/text()').get()
     )
 
     for key, value in attributes.items():
