@@ -1,12 +1,30 @@
+from io import BufferedReader
 import scrapy
 from scrapy import Request
 from scrapy.shell import inspect_response # required for debugging
+
+import os, sys
 import json
-import os
-import sys
-import re
+import gzip
+import typing
 
 default_base_url = 'https://www.transfermarkt.co.uk'
+
+def read_lines(file_name: str, reading_fn: typing.Callable[[str], BufferedReader]) -> typing.List[dict]:
+  """A function that reads JSON lines from a file.
+
+  :param file_name: The name of the file to read from.
+  :type file_name: str
+  :param reading_fn: A function object to be used for opening the file.
+  :type reading_fn: typing.Callable[[str], BufferedReader]
+  :return: A list of json objects (dict)
+  :rtype: typing.List[dict]
+  """
+  with reading_fn(file_name) as f:
+    lines = f.readlines()
+    parents = [ json.loads(line) for line in lines ]
+  
+  return parents
 
 class BaseSpider(scrapy.Spider):
   def __init__(self, base_url=None, parents=None, season=None):
@@ -15,11 +33,23 @@ class BaseSpider(scrapy.Spider):
       self.base_url = base_url
     else:
       self.base_url = default_base_url
-    
+
+    # identify parents file extension (if any)
     if parents is not None:
-      with open(parents) as json_file:
-        lines = json_file.readlines()
-        parents = [ json.loads(line) for line in lines ]
+      extension = parents.split(".")[-1]
+      if extension:
+        self.gzip_compressed = extension == "gz"
+      else: # if no extension, assume the file is not compressed
+        self.gzip_compressed = False
+    else:
+      self.gzip_compressed = False
+    
+    # load parent objects, either from stdin, a file or a zipped file
+    if parents is not None:
+      if self.gzip_compressed:
+        parents = read_lines(parents, gzip.open)
+      else:
+        parents = read_lines(parents, open)
     elif not sys.stdin.isatty():
         parents = [ json.loads(line) for line in sys.stdin ]
     else:
