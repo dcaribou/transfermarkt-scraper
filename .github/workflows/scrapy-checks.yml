@@ -31,4 +31,4 @@ jobs:
       run: poetry install --no-interaction
     - name: Check scrapy contracts
       run: |
-        poetry run scrapy check -s USER_AGENT='transfermarkt scrapy contracts'
+        scrapy check -s USER_AGENT='USER_AGENT="transfermarkt-gh/1.0 (https://github.com/dcaribou/transfermarkt-datasets)"'
