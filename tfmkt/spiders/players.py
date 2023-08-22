@@ -16,6 +16,9 @@ class PlayersSpider(BaseSpider):
         @cb_kwargs {"parent": "dummy"}
       """
 
+      # uncommenting the two lines below will open a scrapy shell with the context of this request
+      # when you run the crawler. this is useful for developing new extractors
+
       # inspect_response(response, self)
       # exit(1)
 
@@ -24,7 +27,7 @@ class PlayersSpider(BaseSpider):
 
       players_table = players_table[0]
 
-      player_hrefs = players_table.xpath('//table[@class="inline-table"]/tr[1]/td[2]/div[1]/span/a/@href').getall()
+      player_hrefs = players_table.xpath('//table[@class="inline-table"]//tr[@class="data-link"]/@data-link').getall()
 
       for href in player_hrefs:
           
