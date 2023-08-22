@@ -70,10 +70,13 @@ class CompetitionsSpider(BaseSpider):
     """Parse competitions from the country competitions page.
 
     @url https://www.transfermarkt.co.uk/wettbewerbe/national/wettbewerbe/157
-    @returns items 3 3
+    @returns items 2 2
     @cb_kwargs {"base": {"href": "some_href/3", "type": "competition", "parent": {}, "country_id": 1, "country_name": "n", "country_code": "CC"}}
     @scrapes type href parent country_id country_name country_code competition_type
     """
+
+    # uncommenting the two lines below will open a scrapy shell with the context of this request
+    # when you run the crawler. this is useful for developing new extractors
 
     # inspect_response(response, self)
     # exit(1)
