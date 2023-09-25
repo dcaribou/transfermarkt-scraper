@@ -25,6 +25,9 @@ def background_position_in_px_to_minute(px_x: int, px_y: int) -> int:
     :rtype: int
     """
 
+    if abs(px_y) > 36*12: # no data available
+        return -1
+        
     n = 10 # number of columns in the matrix
     m = 13 # number of rows in the matrix
     h = 36 # size of the chronometer square in pixels
