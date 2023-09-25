@@ -25,9 +25,6 @@ def background_position_in_px_to_minute(px_x: int, px_y: int) -> int:
     :rtype: int
     """
 
-    if abs(px_y) > 36*12: # no data available
-        return -1
-        
     n = 10 # number of columns in the matrix
     m = 13 # number of rows in the matrix
     h = 36 # size of the chronometer square in pixels
@@ -39,6 +36,9 @@ def background_position_in_px_to_minute(px_x: int, px_y: int) -> int:
         list(range((a-1)*n + 1, a*n + 1))
         for a in range(1, m)
     ]
+
+    if abs(px_y) > h*(m - 1 - y_offset): # no data available
+        return -1
 
     x = abs(px_x) / h
     assert x.is_integer()
