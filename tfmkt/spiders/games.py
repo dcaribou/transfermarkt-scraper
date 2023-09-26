@@ -170,7 +170,8 @@ class GamesSpider(BaseSpider):
 
     game_events = (
       self.extract_game_events(response, event_type="Goals") +
-      self.extract_game_events(response, event_type="Substitutions")
+      self.extract_game_events(response, event_type="Substitutions") +
+      self.extract_game_events(response, event_type="Cards")
     )
 
     item = {
