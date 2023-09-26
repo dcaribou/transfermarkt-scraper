@@ -37,6 +37,9 @@ def background_position_in_px_to_minute(px_x: int, px_y: int) -> int:
         for a in range(1, m)
     ]
 
+    if abs(px_y) > h*(m - 1 - y_offset): # no data available
+        return -1
+
     x = abs(px_x) / h
     assert x.is_integer()
     x = int(x) + x_offset
