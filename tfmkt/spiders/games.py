@@ -104,10 +104,15 @@ class GamesSpider(BaseSpider):
           e.xpath("./div[@class = 'sb-aktion-spielstand']/b/text()").get()
         ),
         "description": self.safe_strip(
-          action_element.xpath("./text()").getall()[1]
+          # goal/card or substitution description
+          (" ".join([s.strip() for s in action_element.xpath("./text()").getall()])).strip() 
+            or (" ".join(action_element.xpath(".//span[@class = 'sb-aktion-wechsel-aus']/span/text()").getall())).strip()
         ),
         "player_in": {
           "href": action_element.xpath(".//div/a/@href").get()
+        },
+        "player_assist": {
+          "href": action_element.xpath("./a/@href").getall()[1] if len(action_element.xpath("./a/@href").getall()) > 1 else None
         }
       }
       events.append(event)
@@ -170,7 +175,8 @@ class GamesSpider(BaseSpider):
 
     game_events = (
       self.extract_game_events(response, event_type="Goals") +
-      self.extract_game_events(response, event_type="Substitutions")
+      self.extract_game_events(response, event_type="Substitutions") +
+      self.extract_game_events(response, event_type="Cards")
     )
 
     item = {
