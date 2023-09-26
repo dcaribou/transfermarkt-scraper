@@ -110,6 +110,9 @@ class GamesSpider(BaseSpider):
         ),
         "player_in": {
           "href": action_element.xpath(".//div/a/@href").get()
+        },
+        "player_assist": {
+          "href": action_element.xpath("./a/@href").getall()[1] if len(action_element.xpath("./a/@href").getall()) > 1 else None
         }
       }
       events.append(event)
