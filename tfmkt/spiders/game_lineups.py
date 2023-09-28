@@ -61,7 +61,7 @@ class GamesSpider(BaseSpider):
 
     @url https://www.transfermarkt.co.uk/spielbericht/aufstellung/spielbericht/3098550
     @returns items 1 1
-    @cb_kwargs {"base": {"item": "game info"}}
+    @cb_kwargs {"base": {"href": "some_href", "lineups": {}, "parent": {}}}
     @scrapes type parent game_id href home_club away_club
     """
 
