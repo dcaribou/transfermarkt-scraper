@@ -61,20 +61,7 @@ class GamesSpider(BaseSpider):
 
     @url https://www.transfermarkt.co.uk/spielbericht/aufstellung/spielbericht/3098550
     @returns items 1 1
-    @cb_kwargs {
-      "base": {
-        "href": "some_href", 
-        "lineups": {
-          "home_club": {
-            "formation": "Starting Line-up: 4-3-3", "starting_lineup": [], "substitutes": []
-          }, 
-          "away_club": {
-            "formation": "Starting Line-up: 4-3-3", "starting_lineup": [], "substitutes": []
-          }
-        }, 
-        "parent": {"href": "some_href", "type": "game", "game_id": 123}
-      }
-    }
+    @cb_kwargs {"base": {"href": "some_href", "lineups": {"home_club": {"formation": "Starting Line-up: 4-3-3", "starting_lineup": [], "substitutes": []}, "away_club": {"formation": "Starting Line-up: 4-3-3", "starting_lineup": [], "substitutes": []}}, "parent": {"href": "some_href", "type": "game", "game_id": 123}}}
     @scrapes type parent game_id href home_club away_club
     """
 
