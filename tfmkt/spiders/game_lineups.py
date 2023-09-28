@@ -3,7 +3,7 @@ from scrapy.shell import inspect_response # required for debugging
 import re
 from tfmkt.utils import background_position_in_px_to_minute
 
-class GamesSpider(BaseSpider):
+class GameLineupsSpider(BaseSpider):
   name = 'game_lineups'
 
   def parse(self, response, parent):
