@@ -11,7 +11,7 @@ class GamesSpider(BaseSpider):
 
     @url https://www.transfermarkt.co.uk/spielbericht/index/spielbericht/3098550
     @returns requests 1 1
-    @cb_kwargs {"parent": "dummy"}
+    @cb_kwargs {"parent": {"href": "some_href"}}
     @scrapes type href parent
     """
 
@@ -61,7 +61,7 @@ class GamesSpider(BaseSpider):
 
     @url https://www.transfermarkt.co.uk/spielbericht/aufstellung/spielbericht/3098550
     @returns items 1 1
-    @cb_kwargs {"base": {"href": "some_href", "lineups": {}, "parent": {}}}
+    @cb_kwargs {"base": {"href": "some_href", "lineups": {"home_club": {"formation": "formation", "starting_lineup": [], "substitutes": []}, "away_club": {"formation": "formation", "starting_lineup": [], "substitutes": []}}, "parent": {}}}
     @scrapes type parent game_id href home_club away_club
     """
 
