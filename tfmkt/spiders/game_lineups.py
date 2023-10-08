@@ -96,11 +96,11 @@ class GameLineupsSpider(BaseSpider):
         elif position_idx:
           position = self.safe_strip(e.xpath("./td/text()").get().split(',')[0])
           player['position'] = position
-          if "Back" in position:
+          if "Back" in position or "Defender" in position or "defender" in position:
             defenders_count = defenders_count + 1
-          elif "Midfield" in position:
+          elif "Midfield" in position or "midfield" in position:
             midfielders_count = midfielders_count + 1
-          elif "Winger" in position or "Forward" in position or "Striker" in position:
+          elif "Winger" in position or "Forward" in position or "Striker" in position or "Attack" in position:
             forwards_count = forwards_count + 1
 
         if position_idx:
