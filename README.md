@@ -21,7 +21,7 @@ This is a [scrapy](https://scrapy.org/) project, so it needs to be run with the
 `scrapy` command line util. This and all other required dependencies can be installed using [poetry](https://python-poetry.org/docs/).
 
 ```console
-cd transfermarkt-datasets
+cd transfermarkt-scraper
 poetry install
 poetry shell
 ```
