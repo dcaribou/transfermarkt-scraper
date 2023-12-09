@@ -67,7 +67,7 @@ class PlayersSpider(BaseSpider):
     attributes["number"] = self.safe_strip(name_element.xpath("span/text()").get())
 
     attributes['name_in_home_country'] = response.xpath("//span[text()='Name in home country:']/following::span[1]/text()").get()
-    attributes['date_of_birth'] = response.xpath("//span[text()='Date of birth/Age:']/following::span[1]//text()").get().strip().split(" (")[0]
+    attributes['date_of_birth'] = response.xpath("//span[@itemprop='birthDate']/text()").get().strip().split(" (")[0]
     attributes['place_of_birth'] = {
       'country': response.xpath("//span[text()='Place of birth:']/following::span[1]/span/img/@title").get(),
       'city': response.xpath("//span[text()='Place of birth:']/following::span[1]/span/text()").get()
