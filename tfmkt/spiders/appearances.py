@@ -93,8 +93,9 @@ class AppearancesSpider(BaseSpider):
 
     # stats tables are 'responsive-tables' (except the first one, which is
     # a summary table)
+
     competitions = response.css(
-        'div.table-header > a::attr(name)'
+        'div.content-box-headline > a::attr(name)'
     ).getall()
     stats_tables = response.css('div.responsive-table')[1:]
     assert(len(competitions) == len(stats_tables))
