@@ -59,20 +59,26 @@ class GameLineupsSpider(BaseSpider):
   def parse_lineups(self, response, base):
     """Parse lineups.
 
-    @url https://www.transfermarkt.co.uk/spielbericht/aufstellung/spielbericht/3098550
+    @url https://www.transfermarkt.co.uk/ecija-balompie_real-madrid/aufstellung/spielbericht/2283303
     @returns items 1 1
     @cb_kwargs {"base": {"href": "some_href", "lineups": {"home_club": {"formation": "Starting Line-up: 4-3-3", "starting_lineup": [], "substitutes": []}, "away_club": {"formation": "Starting Line-up: 4-3-3", "starting_lineup": [], "substitutes": []}}, "parent": {"href": "some_href", "type": "game", "game_id": 123}}}
     @scrapes type parent game_id href home_club away_club
     """
 
+    # uncommenting the two lines below will open a scrapy shell with the context of this request
+    # when you run the crawler. this is useful for developing new extractors
+
+    # inspect_response(response, self)
+    # exit(1)
+
     parent = base['parent']
     lineups = base['lineups']
 
     starting_elements = response.xpath(
-      f"//div[./h2[contains(@class, 'content-box-headline')] and normalize-space(./h2/text()) = 'Starting Line-up']//div[@class='responsive-table']"
+      f"//div[./h2[contains(@class, 'content-box-headline')] and normalize-space(./h2/text()[2]) = 'Starting Line-up']//div[@class='responsive-table']"
     )
     substitutes_elements = response.xpath(
-      f"//div[./h2[contains(@class, 'content-box-headline')] and normalize-space(./h2/text()) = 'Substitutes']//div[@class='responsive-table']"
+      f"//div[./h2[contains(@class, 'content-box-headline')] and normalize-space(./h2/text()[2]) = 'Substitutes']//div[@class='responsive-table']"
     )
 
     for i in range(len(starting_elements)):
