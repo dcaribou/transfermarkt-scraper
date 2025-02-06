@@ -1,130 +1,122 @@
-from tfmkt.spiders.common import BaseSpider
-from urllib.parse import unquote, urlparse
 import re
-
-from scrapy.shell import inspect_response # required for debugging
+from urllib.parse import unquote, urlparse
+from tfmkt.spiders.common import BaseSpider
 
 class ClubsSpider(BaseSpider):
-  name = 'clubs'
+    name = 'clubs'
 
-  def parse(self, response, parent):
-    """Parse competition page. From this page we collect all competition's
-    teams urls
-
-    @url https://www.transfermarkt.co.uk/premier-league/startseite/wettbewerb/GB1
-    @returns requests 20 20
-    @cb_kwargs {"parent": "dummy"}
-    @scrapes type href parent
-    """
-
-    def is_teams_table(table):
-        """Checks whether a table is expected to contain teams information
-        or not, by looking for the word 'Club' in the table headers.
+    def parse(self, response, parent):
         """
-        return True if table.css('th::text')[0].get().lower() == 'club' else False
+        Parse a competition page. We collect all teams from each 'club' table.
+        Some competitions might have multiple tables if second-tier is also listed.
+        """
+        def is_teams_table(table):
+            headers = [h.strip().lower() for h in table.css('th::text').getall() if h]
+            # We consider it a "teams table" if ANY header cell says "club"
+            return any("club" in hdr for hdr in headers)
 
-    def extract_team_href(row):
-        """It extracts one team's href from a teams' table row"""
-        return row.css('td')[1].css('a::attr(href)').get()
+        def extract_team_href(row):
+            """Extract team link from the 2nd <td> in the row."""
+            tds = row.css('td')
+            if len(tds) >= 2:
+                return tds[1].css('a::attr(href)').get()
+            return None
 
-    # get all 'responsive-tabes' in the page
-    page_tables = response.css(
-        'div.responsive-table'
-    )
-    with_teams_info = [
-        table for table in page_tables if is_teams_table(table)
-    ]
-    assert(len(with_teams_info) == 1)
-    for row in with_teams_info[0].css('tbody tr'):
-        href = extract_team_href(row)
-        href_strip_season = re.sub('/saison_id/[0-9]{4}$', '', href)
-
-        cb_kwargs = {
-          'base' : {
-            'type': 'club',
-            'href': href_strip_season,
-            'parent': parent
-          }
-        }
-
-        yield response.follow(href, self.parse_details, cb_kwargs=cb_kwargs)
-
-  def parse_details(self, response, base):
-    """Extract club details from the main page.
-
-      @url https://www.transfermarkt.co.uk/fc-bayern-munchen/startseite/verein/27
-      @returns items 1 1
-      @cb_kwargs {"base": {"href": "some_href/path/to/code", "type": "club", "parent": {}}}
-      @scrapes href type parent
-    """
-
-    # uncommenting the two lines below will open a scrapy shell with the context of this request
-    # when you run the crawler. this is useful for developing new extractors
-
-    # inspect_response(response, self)
-    # exit(1)
-
-    attributes = {}
-
-    # parsing of "dataMarktwert" section
-
-    attributes['total_market_value'] = response.css('div.dataMarktwert a::text').get()
-
-    # parsing of "dataContent" section
-
-    attributes['squad_size'] = self.safe_strip(
-      response.xpath("//li[contains(text(),'Squad size:')]/span/text()").get()
-    )
-
-    attributes['average_age'] = self.safe_strip(
-      response.xpath("//li[contains(text(),'Average age:')]/span/text()").get()
-    )
-    
-    foreigners_element = response.xpath("//li[contains(text(),'Foreigners:')]")[0]
-    attributes['foreigners_number'] = self.safe_strip(foreigners_element.xpath("span/a/text()").get())
-    attributes['foreigners_percentage'] = self.safe_strip(
-      foreigners_element.xpath("span/span/text()").get()
-    )
-
-    attributes['national_team_players'] = self.safe_strip(
-      response.xpath("//li[contains(text(),'National team players:')]/span/a/text()").get()
-    )
-
-    stadium_element = response.xpath("//li[contains(text(),'Stadium:')]")[0]
-    attributes['stadium_name'] = self.safe_strip(
-      stadium_element.xpath("span/a/text()").get()
-    )
-    attributes['stadium_seats'] = self.safe_strip(
-      stadium_element.xpath("span/span/text()").get()
-    )
-
-    attributes['net_transfer_record'] = self.safe_strip(
-      response.xpath("//li[contains(text(),'Current transfer record:')]/span/span/a/text()").get()
-    )
-
-    # parsing of "Coach for the season"
-    attributes['coach_name'] = (
-      response
-        .xpath('//div[contains(@data-viewport, "Mitarbeiter")]//div[@class="container-hauptinfo"]/a/text()')
-        .get()
+        page_tables = response.css('div.responsive-table')
+        teams_tables = [tbl for tbl in page_tables if is_teams_table(tbl)]
         
-    )
-    
-    
-    attributes['code'] = unquote(urlparse(base["href"]).path.split("/")[1])
-    attributes['name'] = self.safe_strip(
-       response.xpath("//span[@itemprop='legalName']/text()").get()
-    ) or self.safe_strip(
-       response.xpath('//h1[@class="data-header__headline-wrapper data-header__headline-wrapper--oswald"]/text()').get()
-    )
+        for table in teams_tables:
+            for row in table.css('tbody tr'):
+                href = extract_team_href(row)
+                if not href:
+                    continue
 
-    for key, value in attributes.items():
-      if value:
-        attributes[key] = value.strip()
-      else:
-        attributes[key] = value
+                href_strip_season = re.sub(r'/saison_id/\d{4}$', '', href)
+                
+                # Merge the parent's data, then override 'type' and 'href' for the club
+                base_club = dict(parent)  # copy the competition item
+                base_club.update({
+                    'type': 'club',
+                    'href': href_strip_season
+                })
 
-    yield {
-      **base,
-      **attributes
-    }
+                yield response.follow(
+                    href,
+                    self.parse_details,
+                    cb_kwargs={'base': base_club}
+                )
+
+    def parse_details(self, response, base):
+        """
+        Extract detailed club info from the main page.
+        """
+        attributes = {}
+
+        # total market value
+        attributes['total_market_value'] = response.css('div.dataMarktwert a::text').get()
+
+        # parse "Squad size", "Average age", etc.
+        attributes['squad_size'] = self.safe_strip(
+            response.xpath("//li[contains(text(),'Squad size:')]/span/text()").get()
+        )
+        attributes['average_age'] = self.safe_strip(
+            response.xpath("//li[contains(text(),'Average age:')]/span/text()").get()
+        )
+
+        # foreigners
+        foreigners_li = response.xpath("//li[contains(text(),'Foreigners:')]")
+        if foreigners_li:
+            attributes['foreigners_number'] = self.safe_strip(
+                foreigners_li[0].xpath("span/a/text()").get()
+            )
+            attributes['foreigners_percentage'] = self.safe_strip(
+                foreigners_li[0].xpath("span/span/text()").get()
+            )
+        else:
+            attributes['foreigners_number'] = None
+            attributes['foreigners_percentage'] = None
+
+        # national team players
+        attributes['national_team_players'] = self.safe_strip(
+            response.xpath("//li[contains(text(),'National team players:')]/span/a/text()").get()
+        )
+
+        # stadium name & seats
+        stadium_li = response.xpath("//li[contains(text(),'Stadium:')]")
+        if stadium_li:
+            attributes['stadium_name'] = self.safe_strip(
+                stadium_li[0].xpath("span/a/text()").get()
+            )
+            attributes['stadium_seats'] = self.safe_strip(
+                stadium_li[0].xpath("span/span/text()").get()
+            )
+        else:
+            attributes['stadium_name'] = None
+            attributes['stadium_seats'] = None
+
+        # net transfer record
+        attributes['net_transfer_record'] = self.safe_strip(
+            response.xpath("//li[contains(text(),'Current transfer record:')]/span/span/a/text()").get()
+        )
+
+        # coach name
+        coach_name = response.xpath('//div[contains(@data-viewport, "Mitarbeiter")]//div[@class="container-hauptinfo"]/a/text()').get()
+        attributes['coach_name'] = coach_name.strip() if coach_name else None
+
+        # code & name from the club's URL
+        attributes['code'] = unquote(urlparse(base["href"]).path.split("/")[1])
+
+        # fallback if the main itemprop=legalName doesn't exist
+        name_selector = response.xpath("//span[@itemprop='legalName']/text()") \
+                        or response.xpath('//h1[contains(@class,"data-header__headline-wrapper")]/text()')
+        attributes['name'] = self.safe_strip(name_selector.get())
+
+        # clean whitespace
+        for k, v in attributes.items():
+            if isinstance(v, str):
+                attributes[k] = v.strip()
+
+        yield {
+            **base,  # merges in competition_code, competition_type, etc.
+            **attributes
+        }
