@@ -1,15 +1,16 @@
-from io import BufferedReader
-import scrapy
-from scrapy import Request
-from scrapy.shell import inspect_response  # required for debugging
+import re
+from urllib.parse import urlparse
 import os, sys
 import json
 import gzip
 import typing
+import scrapy
+from scrapy import Request
+from scrapy.shell import inspect_response  # for debugging if needed
 
 default_base_url = 'https://www.transfermarkt.co.uk'
 
-def read_lines(file_name: str, reading_fn: typing.Callable[[str], BufferedReader]) -> typing.List[dict]:
+def read_lines(file_name: str, reading_fn: typing.Callable[[str], typing.IO[bytes]]) -> typing.List[dict]:
     with reading_fn(file_name) as f:
         lines = f.readlines()
         parents = [json.loads(line) for line in lines]
@@ -62,11 +63,9 @@ class BaseSpider(scrapy.Spider):
     def start_requests(self):
         applicable_items = []
         for item in self.entrypoints:
-            # *** IMPORTANT CHANGE: Do not filter out clubs based on competition_type.
-            # This ensures we process competitions of all tiers.
+            # Use the (fixed) seasonize_entrypoin_href that cleans out any existing '/saison_id/…'
             item['seasoned_href'] = self.seasonize_entrypoin_href(item)
             applicable_items.append(item)
-
         return [
             Request(
                 item['seasoned_href'],
@@ -77,13 +76,14 @@ class BaseSpider(scrapy.Spider):
 
     def seasonize_entrypoin_href(self, item):
         """
-        Build the URL for an entrypoint by appending a season.
-        For clubs: simply add '/saison_id/{season}'.
-        For competitions: if the base href does not already contain '/plus/', add it.
-        (Domestic cups are still handled separately via their URL replacement.)
+        Build the URL for an entrypoint by appending the season.
+        First, remove any existing '/saison_id/<digits>' parts from the item's href,
+        then append the desired season. For competitions that are not domestic cups,
+        if the cleaned href does not already contain '/plus/', we add it.
         """
         season = self.season
-        base_href = item['href']
+        # Remove any existing '/saison_id/...' segments:
+        base_href = re.sub(r'/saison_id/\d+', '', item['href'])
 
         if item['type'] == 'club':
             seasonized_href = f"{self.base_url}{base_href}/saison_id/{season}"
@@ -92,9 +92,8 @@ class BaseSpider(scrapy.Spider):
             if item.get('competition_type') in ['domestic_cup', 'domestic_super_cup']:
                 seasonized_href = f"{self.base_url}{base_href}?saison_id={season}".replace("wettbewerb", "pokalwettbewerb")
             else:
-                # For any league competition (first-tier, second-tier, etc.), always use the plus form.
+                # For league competitions (first tier, second tier, etc.), always use the plus form.
                 if "/plus/" not in base_href:
-                    # Append "/plus/" (without a trailing digit) before the season query.
                     seasonized_href = f"{self.base_url}{base_href}/plus/?saison_id={season}"
                 else:
                     seasonized_href = f"{self.base_url}{base_href}?saison_id={season}"
