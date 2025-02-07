@@ -1,4 +1,4 @@
-from tfmkt.spiders.common import BaseSpider
+from tfmkt.spiders.common_comp_club import BaseSpider
 from scrapy.shell import inspect_response # required for debugging
 import re
 from tfmkt.utils import background_position_in_px_to_minute

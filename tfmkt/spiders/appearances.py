@@ -1,4 +1,4 @@
-from tfmkt.spiders.common import BaseSpider
+from tfmkt.spiders.common_comp_club import BaseSpider
 from scrapy.shell import inspect_response # required for debugging
 from inflection import parameterize, underscore
 from urllib.parse import urlparse

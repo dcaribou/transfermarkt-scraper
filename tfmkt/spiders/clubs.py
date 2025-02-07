@@ -1,4 +1,4 @@
-from tfmkt.spiders.common import BaseSpider
+from tfmkt.spiders.common_comp_club import BaseSpider
 from urllib.parse import unquote, urlparse
 import re
 
