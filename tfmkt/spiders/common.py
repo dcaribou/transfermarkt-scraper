@@ -2,7 +2,7 @@ from io import BufferedReader
 import scrapy
 from scrapy import Request
 from scrapy.shell import inspect_response # required for debugging
-
+import re
 import os, sys
 import json
 import gzip
@@ -63,7 +63,7 @@ class BaseSpider(scrapy.Spider):
     if season:
       self.season = season
     else:
-      self.season = 2022
+      self.season = 2025
 
     self.entrypoints = parents
 
@@ -79,8 +79,6 @@ class BaseSpider(scrapy.Spider):
 
     for item in self.entrypoints:
       # clubs extraction is best done on first_tier competition types only
-      if self.name == 'clubs' and item['competition_type'] != 'first_tier':
-        continue
       item['seasoned_href'] = self.seasonize_entrypoin_href(item)
       applicable_items.append(item)
 
@@ -95,23 +93,46 @@ class BaseSpider(scrapy.Spider):
       for item in applicable_items
     ]
 
+
+
+
+
   def seasonize_entrypoin_href(self, item):
-
-    season = self.season
-
-    if item['type'] == 'club':
-      seasonized_href = f"{self.base_url}{item['href']}/saison_id/{season}"
-    elif item['type'] == 'competition':
-      if item['competition_type'] == 'first_tier':
-        seasonized_href = f"{self.base_url}{item['href']}/plus/0?saison_id={season}"
-      elif item['competition_type'] in ['domestic_cup', 'domestic_super_cup']:
-        seasonized_href = f"{self.base_url}{item['href']}?saison_id={season}".replace("wettbewerb", "pokalwettbewerb")
+      """
+      Build the URL for an entrypoint by first checking if the URL already includes a season.
+      If a season is found, it is used; otherwise, self.season is used.
+      Then, remove any existing '/saison_id/<digits>' and append the appropriate season
+      segment for clubs or competitions.
+      """
+      # Check if the URL already includes a season and capture it
+      season_match = re.search(r'/saison_id/(\d+)', item['href'])
+      if season_match:
+          existing_season = season_match.group(1)
       else:
-        seasonized_href = f"{self.base_url}{item['href']}?saison_id={season}"
-    else:
-      seasonized_href = f"{self.base_url}{item['href']}"
+          existing_season = self.season
 
-    return seasonized_href
+      # Remove any existing '/saison_id/<digits>' from the URL
+      base_href = re.sub(r'/saison_id/\d+', '', item['href'])
+
+      if item['type'] == 'club':
+          # For clubs, simply append the season segment.
+          seasonized_href = f"{self.base_url}{base_href}/saison_id/{existing_season}"
+      elif item['type'] == 'competition':
+          # For domestic cups, change "wettbewerb" to "pokalwettbewerb"
+          if item.get('competition_type') in ['domestic_cup', 'domestic_super_cup']:
+              seasonized_href = f"{self.base_url}{base_href}?saison_id={existing_season}".replace("wettbewerb", "pokalwettbewerb")
+          else:
+              # For any league competition (first-tier, second-tier, etc.), ensure the plus segment is used.
+              if "/plus/" not in base_href:
+                  seasonized_href = f"{self.base_url}{base_href}/plus/?saison_id={existing_season}"
+              else:
+                  seasonized_href = f"{self.base_url}{base_href}?saison_id={existing_season}"
+      else:
+          seasonized_href = f"{self.base_url}{base_href}"
+
+      return seasonized_href
+
+
 
   def safe_strip(self, word):
     if word:
