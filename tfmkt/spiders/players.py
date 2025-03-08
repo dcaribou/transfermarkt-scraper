@@ -90,10 +90,18 @@ class PlayersSpider(BaseSpider):
     attributes['day_of_last_contract_extension'] = response.xpath("//span[text()='Date of last contract extension:']/following::span[1]/text()").get()
     attributes['outfitter'] = response.xpath("//span[text()='Outfitter:']/following::span[1]/text()").get()
 
-    current_market_value_text = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__current-value']/text()").get())
+    # current_market_value_text = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__current-value']/text()").get())
+    current_market_value_text = self.safe_strip(response.xpath("//div[@class='current-value svelte-gfmgwx']/a[1]/text()").get())
     current_market_value_link = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__current-value']/a/text()").get())
     if current_market_value_text: # sometimes the actual value is in the same level (https://www.transfermarkt.co.uk/femi-seriki/profil/spieler/638649)
-      attributes['current_market_value'] = current_market_value_text
+        value_text = current_market_value_text.replace("€", "").strip()
+        if value_text.endswith("k"):
+            market_value = float(value_text[:-1]) * 1_000
+        elif value_text.endswith("m"):
+            market_value = float(value_text[:-1]) * 1_000_000
+        else:
+            market_value = float(value_text)  # Fallback in case no suffix is present
+        attributes['current_market_value'] = market_value
     else: # sometimes is one level down (https://www.transfermarkt.co.uk/rhys-norrington-davies/profil/spieler/543164)
       attributes['current_market_value'] = current_market_value_link
     attributes['highest_market_value'] = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__max-value']/text()").get())
