@@ -93,6 +93,7 @@ class PlayersSpider(BaseSpider):
     # current_market_value_text = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__current-value']/text()").get())
     current_market_value_text = self.safe_strip(response.xpath("//div[@class='current-value svelte-gfmgwx']/a[1]/text()").get())
     current_market_value_link = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__current-value']/a/text()").get())
+    print(current_market_value_text)
     if current_market_value_text: # sometimes the actual value is in the same level (https://www.transfermarkt.co.uk/femi-seriki/profil/spieler/638649)
         value_text = current_market_value_text.replace("€", "").strip()
         if value_text.endswith("k"):
