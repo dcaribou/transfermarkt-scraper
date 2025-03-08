@@ -59,7 +59,6 @@ class PlayersSpider(BaseSpider):
 
     # parse 'PLAYER DATA' section
 
-    print(response.text)
     attributes = {}
 
     name_element = response.xpath("//h1[@class='data-header__headline-wrapper']")
@@ -92,19 +91,30 @@ class PlayersSpider(BaseSpider):
     attributes['outfitter'] = response.xpath("//span[text()='Outfitter:']/following::span[1]/text()").get()
 
     # current_market_value_text = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__current-value']/text()").get())
-    current_market_value_text = self.safe_strip(response.xpath("//div[@class='current-and-max svelte-gfmgwx']//div[@class='current-value svelte-gfmgwx']/a[1]/text()").get())
     # current_market_value_link = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__current-value']/a/text()").get())
-    if current_market_value_text: # sometimes the actual value is in the same level (https://www.transfermarkt.co.uk/femi-seriki/profil/spieler/638649)
-        value_text = current_market_value_text.replace("€", "").strip()
-        if value_text.endswith("k"):
-            market_value = float(value_text[:-1]) * 1_000
-        elif value_text.endswith("m"):
-            market_value = float(value_text[:-1]) * 1_000_000
-        else:
-            market_value = float(value_text)  # Fallback in case no suffix is present
+    
+    # Get the meta description content
+    meta_description = self.safe_strip(response.xpath("//meta[@name='description']/@content").get())
+    
+    # Use regex to extract the market value (e.g., €25k, €25m)
+    check_match = re.search(r'Market value: (\€[\d\.]+[km]?)', meta_description)
+    if check_match:
+        market_value_text = check_match.group(1)  # e.g., '€25k'
+        
+        # Remove the Euro symbol
+        market_value_text = market_value_text.replace('€', '').strip()
+        
+        # Handle the suffix (k = thousand, m = million)
+        if 'k' in market_value_text:
+            market_value = float(market_value_text.replace('k', '')) * 1000
+            
+        elif 'm' in market_value_text:
+            market_value = float(market_value_text.replace('m', '')) * 1000000
+        
         attributes['current_market_value'] = market_value
     else:
-      attributes['current_market_value'] = None
+        attributes['current_market_value'] = None
+    
     attributes['highest_market_value'] = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__max-value']/text()").get())
 
     social_media_value_node = response.xpath("//span[text()='Social-Media:']/following::span[1]")
