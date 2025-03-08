@@ -91,7 +91,7 @@ class PlayersSpider(BaseSpider):
     attributes['outfitter'] = response.xpath("//span[text()='Outfitter:']/following::span[1]/text()").get()
 
     # current_market_value_text = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__current-value']/text()").get())
-    current_market_value_text = response.xpath("//div[@class='current-value svelte-gfmgwx']/a[1]/text() | //div[@class='current-value svelte-gfmgwx']/text()").get()
+    current_market_value_text = response.xpath("//div[@class='current-value svelte-gfmgwx']/text()").get()
     # current_market_value_link = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__current-value']/a/text()").get())
     if current_market_value_text: # sometimes the actual value is in the same level (https://www.transfermarkt.co.uk/femi-seriki/profil/spieler/638649)
         value_text = current_market_value_text.replace("€", "").strip()
@@ -102,7 +102,7 @@ class PlayersSpider(BaseSpider):
         else:
             market_value = float(value_text)  # Fallback in case no suffix is present
         attributes['current_market_value'] = market_value
-    else: # sometimes is one level down (https://www.transfermarkt.co.uk/rhys-norrington-davies/profil/spieler/543164)
+    else:
       attributes['current_market_value'] = None
     attributes['highest_market_value'] = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__max-value']/text()").get())
 
