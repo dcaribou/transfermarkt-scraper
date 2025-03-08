@@ -76,9 +76,13 @@ class PlayersSpider(BaseSpider):
     attributes['height'] = response.xpath("//span[text()='Height:']/following::span[1]/text()").get()
     attributes['citizenship'] = response.xpath("//span[text()='Citizenship:']/following::span[1]/img/@title").get()
     attributes['position'] = self.safe_strip(response.xpath("//span[text()='Position:']/following::span[1]/text()").get())
+    
+    # The agent name can either be inside the anchor tag, title of the anchor tag or 
     attributes['player_agent'] = {
       'href': response.xpath("//span[text()='Player agent:']/following::span[1]/a/@href").get(),
-      'name': response.xpath("//span[text()='Player agent:']/following::span[1]/a/text()").get()
+      'name': response.xpath("//span[text()='Player agent:']/following::span[1]/a/text()").get() or
+              response.xpath("//span[text()='Player agent:']/following::span[1]/span[@class='cp']/@title").get() or
+              response.xpath("//span[text()='Player agent:']/following::span[1]/span[@class='cp']/text()").get()
     }
     attributes['image_url'] = response.xpath("//img[@class='data-header__profile-image']/@src").get()
     attributes['current_club'] = {
