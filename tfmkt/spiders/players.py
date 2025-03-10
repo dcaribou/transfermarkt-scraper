@@ -135,40 +135,18 @@ class PlayersSpider(BaseSpider):
 
     attributes['code'] = unquote(urlparse(base["href"]).path.split("/")[1])
 
-    loan_from_label = response.xpath(
-        '//span[@class="info-table_content info-table__content--regular" and contains(text(), "On loan from:")]'
-    )
-    if loan_from_label:
-        # If label exists, grab the bold span (and possibly the <a> inside).
-        on_loan_from = loan_from_label.xpath(
-            './following-sibling::span[@class="info-table_content info-table__content--bold"]//a/text()'
-        ).get()
-        if on_loan_from:
-            attributes['on_loan_from'] = on_loan_from.strip()
-        else:
-            # Fallback: if for some reason there's no <a> text, get whatever text is in the bold span
-            attributes['on_loan_from'] = loan_from_label.xpath(
-                './following-sibling::span[@class="info-table_content info-table__content--bold"]//text()'
-            ).get()
-    else:
-        attributes['on_loan_from'] = None
+    # --- ON LOAN FROM ---
+    attributes['on_loan_from'] = None
+    on_loan_from = response.xpath("//span[text()='On loan from:']/following::span[1]//text()").get()
+    if on_loan_from:
+        attributes['on_loan_from'] = on_loan_from.strip()
 
-    # -- CONTRACT OPTION --
-    # Check if there's a span containing "Contract option:"
-    contract_option_label = response.xpath(
-        '//span[@class="info-table_content info-table__content--regular" and contains(text(), "Contract option:")]'
-    )
-    if contract_option_label:
-        # Grab the bold span text
-        contract_option = contract_option_label.xpath(
-            './following-sibling::span[@class="info-table_content info-table__content--bold"]/text()'
-        ).get()
-        if contract_option:
-            attributes['contract_option'] = contract_option.strip()
-        else:
-            attributes['contract_option'] = None
-    else:
-        attributes['contract_option'] = None
+    # --- CONTRACT OPTION ---
+    attributes['contract_option'] = None
+    contract_option = response.xpath("//span[text()='Contract option:']/following::span[1]//text()").get()
+    if contract_option:
+        attributes['contract_option'] = contract_option.strip()
+
 
     yield {
       **base,
