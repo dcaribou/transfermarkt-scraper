@@ -76,9 +76,13 @@ class PlayersSpider(BaseSpider):
     attributes['height'] = response.xpath("//span[text()='Height:']/following::span[1]/text()").get()
     attributes['citizenship'] = response.xpath("//span[text()='Citizenship:']/following::span[1]/img/@title").get()
     attributes['position'] = self.safe_strip(response.xpath("//span[text()='Position:']/following::span[1]/text()").get())
+    
+    # The agent name can either be inside the anchor tag, title of the anchor tag or 
     attributes['player_agent'] = {
       'href': response.xpath("//span[text()='Player agent:']/following::span[1]/a/@href").get(),
-      'name': response.xpath("//span[text()='Player agent:']/following::span[1]/a/text()").get()
+      'name': response.xpath("//span[text()='Player agent:']/following::span[1]/a/span[@class='cp']/@title").get() or  # Case 1: agent name in title attribute
+              response.xpath("//span[text()='Player agent:']/following::span[1]/a/text()").get() or  # Case 2: agent name in <a> text
+              response.xpath("//span[text()='Player agent:']/following::span[1]/span/text()").get()  # Case 3: agent name in <span> text without <a>
     }
     attributes['image_url'] = response.xpath("//img[@class='data-header__profile-image']/@src").get()
     attributes['current_club'] = {
@@ -90,12 +94,31 @@ class PlayersSpider(BaseSpider):
     attributes['day_of_last_contract_extension'] = response.xpath("//span[text()='Date of last contract extension:']/following::span[1]/text()").get()
     attributes['outfitter'] = response.xpath("//span[text()='Outfitter:']/following::span[1]/text()").get()
 
-    current_market_value_text = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__current-value']/text()").get())
-    current_market_value_link = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__current-value']/a/text()").get())
-    if current_market_value_text: # sometimes the actual value is in the same level (https://www.transfermarkt.co.uk/femi-seriki/profil/spieler/638649)
-      attributes['current_market_value'] = current_market_value_text
-    else: # sometimes is one level down (https://www.transfermarkt.co.uk/rhys-norrington-davies/profil/spieler/543164)
-      attributes['current_market_value'] = current_market_value_link
+    # current_market_value_text = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__current-value']/text()").get())
+    # current_market_value_link = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__current-value']/a/text()").get())
+    
+    # Get the meta description content
+    meta_description = self.safe_strip(response.xpath("//meta[@name='description']/@content").get())
+    
+    # Use regex to extract the market value (e.g., €25k, €25m)
+    check_match = re.search(r'Market value: (\€[\d\.]+[km]?)', meta_description)
+    if check_match:
+        market_value_text = check_match.group(1)  # e.g., '€25k'
+        
+        # Remove the Euro symbol
+        market_value_text = market_value_text.replace('€', '').strip()
+        
+        # Handle the suffix (k = thousand, m = million)
+        if 'k' in market_value_text:
+            market_value = float(market_value_text.replace('k', '')) * 1000
+            
+        elif 'm' in market_value_text:
+            market_value = float(market_value_text.replace('m', '')) * 1000000
+        
+        attributes['current_market_value'] = market_value
+    else:
+        attributes['current_market_value'] = None
+    
     attributes['highest_market_value'] = self.safe_strip(response.xpath("//div[@class='tm-player-market-value-development__max-value']/text()").get())
 
     social_media_value_node = response.xpath("//span[text()='Social-Media:']/following::span[1]")
