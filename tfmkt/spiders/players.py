@@ -136,7 +136,7 @@ class PlayersSpider(BaseSpider):
     attributes['code'] = unquote(urlparse(base["href"]).path.split("/")[1])
 
     loan_from_label = response.xpath(
-        '//span[@class="info-table_content info-table__content--regular" and contains(text(), "On loan from")]'
+        '//span[@class="info-table_content info-table__content--regular" and contains(text(), "On loan from:")]'
     )
     if loan_from_label:
         # If label exists, grab the bold span (and possibly the <a> inside).
@@ -156,7 +156,7 @@ class PlayersSpider(BaseSpider):
     # -- CONTRACT OPTION --
     # Check if there's a span containing "Contract option:"
     contract_option_label = response.xpath(
-        '//span[@class="info-table_content info-table__content--regular" and contains(text(), "Contract option")]'
+        '//span[@class="info-table_content info-table__content--regular" and contains(text(), "Contract option:")]'
     )
     if contract_option_label:
         # Grab the bold span text
