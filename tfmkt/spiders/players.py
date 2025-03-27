@@ -147,6 +147,11 @@ class PlayersSpider(BaseSpider):
     if contract_option:
         attributes['contract_option'] = contract_option.strip()
 
+      # --- CONTRACT OPTION ---
+    attributes['contract_there_expires'] = None
+    contract_there_expires = response.xpath("//span[text()='Contract there expires:']/following::span[1]//text()").get()
+    if contract_there_expires:
+        attributes['contract_there_expires'] = contract_there_expires.strip()
 
     yield {
       **base,
