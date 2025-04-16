@@ -27,7 +27,7 @@ def read_lines(file_name: str, reading_fn: typing.Callable[[str], BufferedReader
   return parents
 
 class BaseSpider(scrapy.Spider):
-  def __init__(self, base_url=None, parents=None, season=None):
+  def __init__(self, base_url=None, parents=None):
 
     if base_url is not None:
       self.base_url = base_url
@@ -60,10 +60,6 @@ class BaseSpider(scrapy.Spider):
       if parent.get('parent') is not None:
         del parent['parent']
 
-    if season:
-      self.season = season
-    else:
-      self.season = 2025
 
     self.entrypoints = parents
 
@@ -104,29 +100,23 @@ class BaseSpider(scrapy.Spider):
       Then, remove any existing '/saison_id/<digits>' and append the appropriate season
       segment for clubs or competitions.
       """
-      # Check if the URL already includes a season and capture it
-      season_match = re.search(r'/saison_id/(\d+)', item['href'])
-      if season_match:
-          existing_season = season_match.group(1)
-      else:
-          existing_season = self.season
 
       # Remove any existing '/saison_id/<digits>' from the URL
       base_href = re.sub(r'/saison_id/\d+', '', item['href'])
 
       if item['type'] == 'club':
           # For clubs, simply append the season segment.
-          seasonized_href = f"{self.base_url}{base_href}/saison_id/{existing_season}"
+          seasonized_href = f"{self.base_url}{base_href}"
       elif item['type'] == 'competition':
           # For domestic cups, change "wettbewerb" to "pokalwettbewerb"
           if item.get('competition_type') in ['domestic_cup', 'domestic_super_cup']:
-              seasonized_href = f"{self.base_url}{base_href}?saison_id={existing_season}".replace("wettbewerb", "pokalwettbewerb")
+              seasonized_href = f"{self.base_url}{base_href}".replace("wettbewerb", "pokalwettbewerb")
           else:
               # For any league competition (first-tier, second-tier, etc.), ensure the plus segment is used.
               if "/plus/" not in base_href:
-                  seasonized_href = f"{self.base_url}{base_href}/plus/?saison_id={existing_season}"
+                  seasonized_href = f"{self.base_url}{base_href}/plus/"
               else:
-                  seasonized_href = f"{self.base_url}{base_href}?saison_id={existing_season}"
+                  seasonized_href = f"{self.base_url}{base_href}"
       else:
           seasonized_href = f"{self.base_url}{base_href}"
 
