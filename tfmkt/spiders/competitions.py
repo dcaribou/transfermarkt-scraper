@@ -5,6 +5,10 @@ from inflection import parameterize, underscore
 class CompetitionsSpider(BaseSpider):
     name = 'competitions'
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.seen_competitions = set()
+
     def parse(self, response, parent):
         """
         Parse confederations page. For each row (country), follow
@@ -82,18 +86,27 @@ class CompetitionsSpider(BaseSpider):
                     if competition_href:
                         # e.g. /campeonato-brasileiro-serie-b/startseite/wettbewerb/BRA2
                         # extract 'BRA2'
+                        if competition_href in ('/liguilla-clausura/startseite/wettbewerb/POME', '/liguilla-apertura/startseite/wettbewerb/POMX', '/liga-mx-apertura/startseite/wettbewerb/MEXA'):
+                            competition_href = '/liga-mx-clausura/startseite/wettbewerb/MEX1'
+    
                         match_code = re.search(r'/wettbewerb/([^/]+)$', competition_href)
                         competition_code = match_code.group(1) if match_code else None
 
-                        parameterized_tier = underscore(parameterize(tier_name))
+                        # Create a unique key for the competition
+                        competition_key = f"{base['country_id']}_{competition_code}"
+                        
+                        # Only yield if we haven't seen this competition before
+                        if competition_key not in self.seen_competitions:
+                            self.seen_competitions.add(competition_key)
+                            parameterized_tier = underscore(parameterize(tier_name))
 
-                        yield {
-                            'type': 'competition',
-                            **base,  # merges country_id, country_name, etc.
-                            'competition_code': competition_code,
-                            'competition_type': parameterized_tier,
-                            'href': competition_href
-                        }
+                            yield {
+                                'type': 'competition',
+                                **base,  # merges country_id, country_name, etc.
+                                'competition_code': competition_code,
+                                'competition_type': parameterized_tier,
+                                'href': competition_href
+                            }
             idx += 2
 
     def closed(self, reason):
