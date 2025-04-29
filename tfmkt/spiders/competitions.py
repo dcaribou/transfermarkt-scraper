@@ -88,7 +88,8 @@ class CompetitionsSpider(BaseSpider):
                         # extract 'BRA2'
                         if competition_href in ('/liguilla-clausura/startseite/wettbewerb/POME', '/liguilla-apertura/startseite/wettbewerb/POMX', '/liga-mx-apertura/startseite/wettbewerb/MEXA'):
                             competition_href = '/liga-mx-clausura/startseite/wettbewerb/MEX1'
-    
+                        if competition_href in ('/torneo-clausura/startseite/wettbewerb/ARGC'):
+                            competition_href = '/torneo-apertura/startseite/wettbewerb/ARG1'
                         match_code = re.search(r'/wettbewerb/([^/]+)$', competition_href)
                         competition_code = match_code.group(1) if match_code else None
 
