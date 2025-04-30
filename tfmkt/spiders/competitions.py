@@ -52,6 +52,13 @@ class CompetitionsSpider(BaseSpider):
 
             yield response.follow(self.base_url + href, self.parse_competitions, cb_kwargs=cb_kwargs)
 
+        # Find pagination links
+        pagination_links = response.css('ul.pagination li a::attr(href)').getall()
+        for link in pagination_links:
+            # Only follow if it's not the current page
+            if link and link not in response.url:
+                yield response.follow(link, self.parse, cb_kwargs={'parent': parent})
+
     def parse_competitions(self, response, base):
         """
         Parse domestic leagues from the 'Domestic leagues & cups' box,
