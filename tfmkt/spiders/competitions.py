@@ -109,43 +109,36 @@ class CompetitionsSpider(BaseSpider):
         box_body = relevant_box.xpath('div[@class="responsive-table"]//tbody')[0]
         box_rows = box_body.xpath('tr')
 
-        idx = 0
-        while idx < len(box_rows):
-            tier_row = box_rows[idx]
-            tier_name = tier_row.xpath('td/text()').get() or ""
+        current_tier = None
+        for row in box_rows:
+            # Check if this row is a tier header (no table, just text)
+            tier_name = row.xpath('td/text()').get()
+            if tier_name and not row.xpath('td/table').get():
+                current_tier = tier_name.strip()
+                continue
 
-            # skip cups
-            if tier_name not in ("Domestic Cup", "Domestic Super Cup"):
-                link_row_idx = idx + 1
-                if link_row_idx < len(box_rows):
-                    link_row = box_rows[link_row_idx]
-                    competition_href = link_row.xpath('td/table//td')[1].xpath('a/@href').get()
-                    if competition_href:
-                        # e.g. /campeonato-brasileiro-serie-b/startseite/wettbewerb/BRA2
-                        # extract 'BRA2'
-                        if competition_href in ('/liguilla-clausura/startseite/wettbewerb/POME', '/liguilla-apertura/startseite/wettbewerb/POMX', '/liga-mx-apertura/startseite/wettbewerb/MEXA'):
-                            competition_href = '/liga-mx-clausura/startseite/wettbewerb/MEX1'
-                        if competition_href in ('/torneo-clausura/startseite/wettbewerb/ARGC'):
-                            competition_href = '/torneo-apertura/startseite/wettbewerb/ARG1'
-                        match_code = re.search(r'/wettbewerb/([^/]+)$', competition_href)
-                        competition_code = match_code.group(1) if match_code else None
+            # If this row is a competition row (has a table with a link)
+            if row.xpath('td/table').get() and current_tier not in ("Domestic Cup", "Domestic Super Cup"):
+                competition_href = row.xpath('td/table//td')[1].xpath('a/@href').get()
+                if competition_href:
+                    if competition_href in ('/liguilla-clausura/startseite/wettbewerb/POME', '/liguilla-apertura/startseite/wettbewerb/POMX', '/liga-mx-apertura/startseite/wettbewerb/MEXA'):
+                        competition_href = '/liga-mx-clausura/startseite/wettbewerb/MEX1'
+                    if competition_href in ('/torneo-clausura/startseite/wettbewerb/ARGC'):
+                        competition_href = '/torneo-apertura/startseite/wettbewerb/ARG1'
+                    match_code = re.search(r'/wettbewerb/([^/]+)$', competition_href)
+                    competition_code = match_code.group(1) if match_code else None
 
-                        # Create a unique key for the competition
-                        competition_key = f"{base['country_id']}_{competition_code}"
-                        
-                        # Only yield if we haven't seen this competition before
-                        if competition_key not in self.seen_competitions:
-                            self.seen_competitions.add(competition_key)
-                            parameterized_tier = underscore(parameterize(tier_name))
-
-                            yield {
-                                'type': 'competition',
-                                **base,  # merges country_id, country_name, etc.
-                                'competition_code': competition_code,
-                                'competition_type': parameterized_tier,
-                                'href': competition_href
-                            }
-            idx += 2
+                    competition_key = f"{base['country_id']}_{competition_code}"
+                    if competition_key not in self.seen_competitions:
+                        self.seen_competitions.add(competition_key)
+                        parameterized_tier = underscore(parameterize(current_tier))
+                        yield {
+                            'type': 'competition',
+                            **base,
+                            'competition_code': competition_code,
+                            'competition_type': parameterized_tier,
+                            'href': competition_href
+                        }
 
     def closed(self, reason):
         # ignoring international comps entirely
