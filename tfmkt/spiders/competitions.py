@@ -57,6 +57,43 @@ class CompetitionsSpider(BaseSpider):
         Extract the real 'competition_code' from each link (like 'BRA2'),
         store competition_type from the tier name (like 'second_tier').
         """
+        # Add manual competitions for England first
+        if base['country_id'] == '189':  # England
+            manual_competitions = [
+                {
+                    'href': '/national-league-south/startseite/wettbewerb/NLS6/plus',
+                    'code': 'NLS6',
+                    'type': 'sixth_tier'
+                },
+                {
+                    'href': '/national-league-north/startseite/wettbewerb/NLN6/plus',
+                    'code': 'NLN6',
+                    'type': 'sixth_tier'
+                },
+                {
+                    'href': '/premier-league-2/startseite/wettbewerb/GB21/plus',
+                    'code': 'GB21',
+                    'type': 'reserve_league'
+                },
+                {
+                    'href': '/u18-premier-league/startseite/wettbewerb/GB18/plus',
+                    'code': 'GB18',
+                    'type': 'youth_league'
+                }
+            ]
+
+            for comp in manual_competitions:
+                competition_key = f"189_{comp['code']}"
+                if competition_key not in self.seen_competitions:
+                    self.seen_competitions.add(competition_key)
+                    yield {
+                        'type': 'competition',
+                        **base,
+                        'competition_code': comp['code'],
+                        'competition_type': comp['type'],
+                        'href': comp['href']
+                    }
+
         domestic_tag = 'Domestic leagues & cups'
         boxes = response.css('div.box')
         relevant_box = None
@@ -109,43 +146,6 @@ class CompetitionsSpider(BaseSpider):
                                 'href': competition_href
                             }
             idx += 2
-
-        # Manually add competitions that aren't scraped
-        
-        manual_competitions = [
-                {
-                    'href': '/national-league-south/startseite/wettbewerb/NLS6',
-                    'code': 'NLS6',
-                    'type': 'national_league_south'
-                },
-                {
-                    'href': '/national-league-north/startseite/wettbewerb/NLN6',
-                    'code': 'NLN6',
-                    'type': 'national_league_north'
-                },
-                {
-                    'href': '/premier-league-2/startseite/wettbewerb/GB21',
-                    'code': 'GB21',
-                    'type': 'premier_league_2'
-                },
-                {
-                    'href': '/u18-premier-league/startseite/wettbewerb/GB18',
-                    'code': 'GB18',
-                    'type': 'u18_premier_league'
-                }
-            ]
-
-        for comp in manual_competitions:
-            competition_key = f"189_{comp['code']}"
-            if competition_key not in self.seen_competitions:
-                self.seen_competitions.add(competition_key)
-                yield {
-                        'type': 'competition',
-                        **base,
-                        'competition_code': comp['code'],
-                        'competition_type': comp['type'],
-                        'href': comp['href']
-                    }
 
     def closed(self, reason):
         # ignoring international comps entirely
