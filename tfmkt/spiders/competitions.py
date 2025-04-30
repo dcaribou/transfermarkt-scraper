@@ -15,11 +15,13 @@ class CompetitionsSpider(BaseSpider):
         the link to /wettbewerbe/national/wettbewerbe/<country_id>
         but do NOT store the old 'country_code' from the table row.
         """
-        table_rows = response.css('table.items tbody tr.odd, table.items tbody tr.even')
+        table_rows = response.css('table.items tbody tr')
 
         for row in table_rows:
-            country_image_url = row.xpath('td')[1].css('img::attr(src)').get()
-            country_name = row.xpath('td')[1].css('img::attr(title)').get()
+            country_image_url = row.css('td img.flaggenrahmen::attr(src)').get()
+            country_name = row.css('td img.flaggenrahmen::attr(title)').get()
+            if not country_name or not country_image_url:
+                continue  # skip non-country rows
             print(f"Extracted country: {country_name}")
             total_clubs = row.css('td:nth-of-type(3)::text').get()
             total_players = row.css('td:nth-of-type(4)::text').get()
