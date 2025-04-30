@@ -118,9 +118,9 @@ class CompetitionsSpider(BaseSpider):
                 continue
 
             # If this row is a competition row (has a table with a link)
-            if row.xpath('td/table').get() and current_tier not in ("Domestic Cup", "Domestic Super Cup"):
+            if row.xpath('td/table').get() and current_tier not in ("Domestic Cup", "Domestic Super Cup", "Play-Offs", "League Cup", "Domestic Youth Cup", "Further Cup", "Youth league", "Reserve league"):
                 competition_href = row.xpath('td/table//td')[1].xpath('a/@href').get()
-                if competition_href:
+                if competition_href:	
                     if competition_href in ('/liguilla-clausura/startseite/wettbewerb/POME', '/liguilla-apertura/startseite/wettbewerb/POMX', '/liga-mx-apertura/startseite/wettbewerb/MEXA'):
                         competition_href = '/liga-mx-clausura/startseite/wettbewerb/MEX1'
                     if competition_href in ('/torneo-clausura/startseite/wettbewerb/ARGC'):
