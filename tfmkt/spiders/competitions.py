@@ -111,8 +111,8 @@ class CompetitionsSpider(BaseSpider):
             idx += 2
 
         # Manually add competitions that aren't scraped
-        if base['country_id'] == '189':  # England
-            manual_competitions = [
+        
+        manual_competitions = [
                 {
                     'href': '/national-league-south/startseite/wettbewerb/NLS6',
                     'code': 'NLS6',
@@ -135,11 +135,11 @@ class CompetitionsSpider(BaseSpider):
                 }
             ]
 
-            for comp in manual_competitions:
-                competition_key = f"{base['country_id']}_{comp['code']}"
-                if competition_key not in self.seen_competitions:
-                    self.seen_competitions.add(competition_key)
-                    yield {
+        for comp in manual_competitions:
+            competition_key = f"189_{comp['code']}"
+            if competition_key not in self.seen_competitions:
+                self.seen_competitions.add(competition_key)
+                yield {
                         'type': 'competition',
                         **base,
                         'competition_code': comp['code'],
