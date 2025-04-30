@@ -20,7 +20,7 @@ class CompetitionsSpider(BaseSpider):
         for row in table_rows:
             country_image_url = row.xpath('td')[1].css('img::attr(src)').get()
             country_name = row.xpath('td')[1].css('img::attr(title)').get()
-
+            print(f"Extracted country: {country_name}")
             total_clubs = row.css('td:nth-of-type(3)::text').get()
             total_players = row.css('td:nth-of-type(4)::text').get()
             average_age = row.css('td:nth-of-type(5)::text').get()
@@ -57,6 +57,48 @@ class CompetitionsSpider(BaseSpider):
         Extract the real 'competition_code' from each link (like 'BRA2'),
         store competition_type from the tier name (like 'second_tier').
         """
+        # Add manual competitions for Ireland
+        if base['country_id'] == '72':  # Ireland
+            manual_competitions = [
+                {
+                    'href': '/league-of-ireland-premier-division/startseite/wettbewerb/IR1/plus',
+                    'code': 'IR1',
+                    'type': 'first_tier'
+                }
+            ]
+            for comp in manual_competitions:
+                competition_key = f"72_{comp['code']}"
+                if competition_key not in self.seen_competitions:
+                    self.seen_competitions.add(competition_key)
+                    yield {
+                        'type': 'competition',
+                        **base,
+                        'competition_code': comp['code'],
+                        'competition_type': comp['type'],
+                        'href': comp['href']
+                    }
+
+        # Add manual competitions for Israel
+        if base['country_id'] == '74':  # Israel
+            manual_competitions = [
+                {
+                    'href': '/ligat-haal/startseite/wettbewerb/ISR1/plus',
+                    'code': 'ISR1',
+                    'type': 'first_tier'
+                }
+            ]
+            for comp in manual_competitions:
+                competition_key = f"74_{comp['code']}"
+                if competition_key not in self.seen_competitions:
+                    self.seen_competitions.add(competition_key)
+                    yield {
+                        'type': 'competition',
+                        **base,
+                        'competition_code': comp['code'],
+                        'competition_type': comp['type'],
+                        'href': comp['href']
+                    }
+
         # Add manual competitions for England first
         if base['country_id'] == '189':  # England
             manual_competitions = [
