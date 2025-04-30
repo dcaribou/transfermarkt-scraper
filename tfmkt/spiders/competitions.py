@@ -15,6 +15,7 @@ class CompetitionsSpider(BaseSpider):
         the link to /wettbewerbe/national/wettbewerbe/<country_id>
         but do NOT store the old 'country_code' from the table row.
         """
+        print(f"Processing page: {response.url}")
         table_rows = response.css('table.items tbody tr')
 
         for row in table_rows:
@@ -53,7 +54,7 @@ class CompetitionsSpider(BaseSpider):
             yield response.follow(self.base_url + href, self.parse_competitions, cb_kwargs=cb_kwargs)
 
         # Find pagination links
-        pagination_links = response.css('ul.pagination li a::attr(href)').getall()
+        pagination_links = response.css('ul.tm-pagination li a::attr(href)').getall()
         for link in pagination_links:
             # Only follow if it's not the current page
             if link and link not in response.url:
