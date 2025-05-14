@@ -137,9 +137,13 @@ class PlayersSpider(BaseSpider):
 
     # --- ON LOAN FROM ---
     attributes['on_loan_from'] = None
-    on_loan_from = response.xpath("//span[text()='On loan from:']/following::span[1]//text()").get()
+    on_loan_from = response.xpath(
+        "//span[normalize-space(text())='On loan from:']"
+        "/following-sibling::span[1]//a/@href"
+    ).get()
     if on_loan_from:
         attributes['on_loan_from'] = on_loan_from.strip()
+
 
     # --- CONTRACT OPTION ---
     attributes['contract_option'] = None
