@@ -71,7 +71,7 @@ class CompetitionsSpider(BaseSpider):
         if base['country_id'] == '72':  # Ireland
             manual_competitions = [
                 {
-                    'href': '/league-of-ireland-premier-division/startseite/wettbewerb/IR1/plus',
+                    'href': '/league-of-ireland-premier-division/startseite/wettbewerb/IR1',
                     'code': 'IR1',
                     'type': 'first_tier'
                 }
@@ -92,7 +92,7 @@ class CompetitionsSpider(BaseSpider):
         if base['country_id'] == '74':  # Israel
             manual_competitions = [
                 {
-                    'href': '/ligat-haal/startseite/wettbewerb/ISR1/plus',
+                    'href': '/ligat-haal/startseite/wettbewerb/ISR1',
                     'code': 'ISR1',
                     'type': 'first_tier'
                 }
@@ -113,22 +113,22 @@ class CompetitionsSpider(BaseSpider):
         if base['country_id'] == '189':  # England
             manual_competitions = [
                 {
-                    'href': '/national-league-south/startseite/wettbewerb/NLS6/plus',
+                    'href': '/national-league-south/startseite/wettbewerb/NLS6',
                     'code': 'NLS6',
                     'type': 'sixth_tier'
                 },
                 {
-                    'href': '/national-league-north/startseite/wettbewerb/NLN6/plus',
+                    'href': '/national-league-north/startseite/wettbewerb/NLN6',
                     'code': 'NLN6',
                     'type': 'sixth_tier'
                 },
                 {
-                    'href': '/premier-league-2/startseite/wettbewerb/GB21/plus',
+                    'href': '/premier-league-2/startseite/wettbewerb/GB21',
                     'code': 'GB21',
                     'type': 'reserve_league'
                 },
                 {
-                    'href': '/u18-premier-league/startseite/wettbewerb/GB18/plus',
+                    'href': '/u18-premier-league/startseite/wettbewerb/GB18',
                     'code': 'GB18',
                     'type': 'youth_league'
                 }
