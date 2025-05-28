@@ -63,7 +63,7 @@ class BaseSpider(scrapy.Spider):
     if season:
       self.season = season
     else:
-      self.season = 2022
+      self.season = 2024
 
     self.entrypoints = parents
 
@@ -83,7 +83,6 @@ class BaseSpider(scrapy.Spider):
         continue
       item['seasoned_href'] = self.seasonize_entrypoin_href(item)
       applicable_items.append(item)
-
 
     return [
       Request(

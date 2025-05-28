@@ -1,6 +1,7 @@
 
 ![checks status](https://github.com/dcaribou/transfermarkt-scraper/workflows/Scrapy%20Contracts%20Checks/badge.svg)
 ![docker build status](https://github.com/dcaribou/transfermarkt-scraper/workflows/Dockerhub%20Image/badge.svg)
+
 # transfermarkt-scraper
 
 A web scraper for collecting data from [Transfermarkt](https://www.transfermarkt.co.uk/) website. It recurses into the Transfermarkt hierarchy to find
@@ -16,6 +17,7 @@ A web scraper for collecting data from [Transfermarkt](https://www.transfermarkt
 Each one of these entities can be discovered and refreshed separately by invoking the corresponding crawler.
 
 ## Installation
+> [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/dcaribou/transfermarkt-scraper/tree/main?quickstart=1)
 
 This is a [scrapy](https://scrapy.org/) project, so it needs to be run with the
 `scrapy` command line util. This and all other required dependencies can be installed using [poetry](https://python-poetry.org/docs/).

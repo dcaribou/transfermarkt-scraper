@@ -121,7 +121,7 @@ class PlayersSpider(BaseSpider):
     """
     Parse player's market history from the graph
     """
-    pattern = re.compile('\'data\'\:.*\}\}]')
+    pattern = re.compile(r'\'data\'\:.*\}\}]')
 
     try:
       parsed_script = json.loads(

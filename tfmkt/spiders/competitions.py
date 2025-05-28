@@ -45,7 +45,7 @@ class CompetitionsSpider(BaseSpider):
 
       total_value = row.css('td:nth-of-type(8)::text').get()
 
-      matches = re.search('([0-9]+)\.png', country_image_url, re.IGNORECASE)
+      matches = re.search(r'([0-9]+)\.png', country_image_url, re.IGNORECASE)
       country_id = matches.group(1)
 
       href = "/wettbewerbe/national/wettbewerbe/" + country_id
