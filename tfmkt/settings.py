@@ -7,6 +7,11 @@ NEWSPIDER_MODULE = 'tfmkt.spiders'
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
 
+DOWNLOAD_DELAY = 2  # minimum download delay 
+AUTOTHROTTLE_ENABLED = True
+AUTOTHROTTLE_START_DELAY = 2
+AUTOTHROTTLE_TARGET_CONCURRENCY = 1
+
 FEED_FORMAT = 'jsonlines'
 FEED_URI = 'stdout:'
 
@@ -30,3 +35,13 @@ HTTPCACHE_DIR = 'httpcache'
 
 # https://docs.scrapy.org/en/latest/topics/request-response.html?highlight=REQUEST_FINGERPRINTER_IMPLEMENTATION#std-setting-REQUEST_FINGERPRINTER_IMPLEMENTATION
 REQUEST_FINGERPRINTER_IMPLEMENTATION = '2.7'
+
+# FAKEUSERAGENT_PROVIDERS = [
+#     'scrapy_fake_useragent.providers.FakeUserAgentProvider',  # This is the first provider we'll try
+#     'scrapy_fake_useragent.providers.FakerProvider',  # If FakeUserAgentProvider fails, we'll use faker to generate a user-agent string for us
+#     'scrapy_fake_useragent.providers.FixedUserAgentProvider',  # Fall back to USER_AGENT value
+# ]
+
+# USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
+
+# ROBOTSTXT_USER_AGENT="USER_AGENT='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'"

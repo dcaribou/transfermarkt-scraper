@@ -25,6 +25,31 @@ class CompetitionsSpider(BaseSpider):
     # inspect_response(response, self)
     # exit(1)
 
+    # If this is the first page, generate requests for all pages of this confederation
+    current_url = response.url
+    if '?page=' not in current_url:
+      # Determine confederation and total pages
+      confederation_pages = {
+        '/wettbewerbe/europa': 2,
+        '/wettbewerbe/amerika': 1,
+      }
+      # '/wettbewerbe/asien': 1,
+      # '/wettbewerbe/afrika': 1
+      
+      # Find the confederation path
+      confederation_path = None
+      for path in confederation_pages.keys():
+        if path in current_url:
+          confederation_path = path
+          break
+      
+      if confederation_path:
+        total_pages = confederation_pages[confederation_path]
+        # Generate requests for pages 2 onwards (page 1 is handled below)
+        for page_num in range(2, total_pages + 1):
+          page_url = f"{confederation_path}?page={page_num}"
+          yield response.follow(page_url, self.parse, cb_kwargs={'parent': parent})
+
     table_rows = response.css('table.items tbody tr.odd, table.items tbody tr.even')
 
     for row in table_rows[0:]:
@@ -115,6 +140,8 @@ class CompetitionsSpider(BaseSpider):
       tier = row.xpath('td/text()').get()
       if tier in [
         'First Tier',
+        'Second Tier',
+        'Third Tier',
         'Domestic Cup',
         'Domestic Super Cup'
       ]:
