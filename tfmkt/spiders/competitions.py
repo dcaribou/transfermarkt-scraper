@@ -52,7 +52,6 @@ class CompetitionsSpider(BaseSpider):
 
     table_rows = response.css('table.items tbody tr.odd, table.items tbody tr.even')
 
-    request_count = 0
     for row in table_rows[0:]:
       country_image_url = row.xpath('td')[1].css('img::attr(src)').get()
       country_name = row.xpath('td')[1].css('img::attr(title)').get()
@@ -91,7 +90,6 @@ class CompetitionsSpider(BaseSpider):
       }
 
       yield response.follow(self.base_url + href, self.parse_competitions, cb_kwargs=cb_kwargs)
-      request_count += 1
       
   def parse_competitions(self, response, base):
     """Parse competitions from the country competitions page.
