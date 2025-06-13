@@ -14,9 +14,9 @@ class CompetitionsSpider(BaseSpider):
   def parse(self, response, parent):
     """Parse confederations page. From this page we collect all
     confederation's competitions urls
-
+    This contract will scrape /europa, /europa?page=2 etc. till it reaches =6
     @url https://www.transfermarkt.co.uk/wettbewerbe/europa
-    @returns requests 25 25
+    @returns requests 30 30
     @cb_kwargs {"parent": {}}
     """
     # uncommenting the two lines below will open a scrapy shell with the context of this request
@@ -24,6 +24,31 @@ class CompetitionsSpider(BaseSpider):
 
     # inspect_response(response, self)
     # exit(1)
+
+    # Making use of the ?page attribute to render more then just the first page of the confederation
+    current_url = response.url
+    if '?page=' not in current_url:
+      # Setting up the number of pages for each confederation that we need to scrape to find all till third tier
+      confederation_pages = {
+        '/wettbewerbe/europa': 6,
+        '/wettbewerbe/amerika': 3,
+        '/wettbewerbe/asien': 3,
+        '/wettbewerbe/afrika': 1
+      }
+      
+      # Find the confederation path
+      confederation_path = None
+      for path in confederation_pages.keys():
+        if path in current_url:
+          confederation_path = path
+          break
+      
+      if confederation_path:
+        total_pages = confederation_pages[confederation_path]
+        # Generate requests for pages 2 onwards (page 1 is handled below)
+        for page_num in range(2, total_pages + 1):
+          page_url = f"{confederation_path}?page={page_num}"
+          yield response.follow(page_url, self.parse, cb_kwargs={'parent': parent})
 
     table_rows = response.css('table.items tbody tr.odd, table.items tbody tr.even')
 
@@ -65,12 +90,12 @@ class CompetitionsSpider(BaseSpider):
       }
 
       yield response.follow(self.base_url + href, self.parse_competitions, cb_kwargs=cb_kwargs)
-
+      
   def parse_competitions(self, response, base):
     """Parse competitions from the country competitions page.
 
     @url https://www.transfermarkt.co.uk/wettbewerbe/national/wettbewerbe/157
-    @returns items 3 3
+    @returns items 5 5
     @cb_kwargs {"base": {"href": "some_href/3", "type": "competition", "parent": {}, "country_id": 1, "country_name": "n", "country_code": "CC"}}
     @scrapes type href parent country_id country_name country_code competition_type
     """
@@ -115,6 +140,8 @@ class CompetitionsSpider(BaseSpider):
       tier = row.xpath('td/text()').get()
       if tier in [
         'First Tier',
+        'Second Tier',
+        'Third Tier',
         'Domestic Cup',
         'Domestic Super Cup'
       ]:
