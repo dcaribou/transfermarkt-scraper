@@ -30,5 +30,3 @@ HTTPCACHE_DIR = 'httpcache'
 
 # https://docs.scrapy.org/en/latest/topics/request-response.html?highlight=REQUEST_FINGERPRINTER_IMPLEMENTATION#std-setting-REQUEST_FINGERPRINTER_IMPLEMENTATION
 REQUEST_FINGERPRINTER_IMPLEMENTATION = '2.7'
-
-ROBOTSTXT_USER_AGENT="USER_AGENT='Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'"

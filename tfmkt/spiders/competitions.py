@@ -14,7 +14,7 @@ class CompetitionsSpider(BaseSpider):
   def parse(self, response, parent):
     """Parse confederations page. From this page we collect all
     confederation's competitions urls
-
+    This contract will scrape /europa, /europa?page=2 etc. till it reaches =6
     @url https://www.transfermarkt.co.uk/wettbewerbe/europa
     @returns requests 30 30
     @cb_kwargs {"parent": {}}
