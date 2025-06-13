@@ -16,7 +16,7 @@ class CompetitionsSpider(BaseSpider):
     confederation's competitions urls
 
     @url https://www.transfermarkt.co.uk/wettbewerbe/europa
-    @returns requests 25 25
+    @returns requests 30 30
     @cb_kwargs {"parent": {}}
     """
     # uncommenting the two lines below will open a scrapy shell with the context of this request
