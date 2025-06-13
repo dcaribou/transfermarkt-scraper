@@ -25,16 +25,16 @@ class CompetitionsSpider(BaseSpider):
     # inspect_response(response, self)
     # exit(1)
 
-    # If this is the first page, generate requests for all pages of this confederation
+    # Making use of the ?page attribute to render more then just the first page of the confederation
     current_url = response.url
     if '?page=' not in current_url:
-      # Determine confederation and total pages
+      # Setting up the number of pages for each confederation that we need to scrape to find all till third tier
       confederation_pages = {
-        '/wettbewerbe/europa': 2,
-        '/wettbewerbe/amerika': 1,
+        '/wettbewerbe/europa': 6,
+        '/wettbewerbe/amerika': 3,
+        '/wettbewerbe/asien': 3,
+        '/wettbewerbe/afrika': 1
       }
-      # '/wettbewerbe/asien': 1,
-      # '/wettbewerbe/afrika': 1
       
       # Find the confederation path
       confederation_path = None
@@ -52,6 +52,7 @@ class CompetitionsSpider(BaseSpider):
 
     table_rows = response.css('table.items tbody tr.odd, table.items tbody tr.even')
 
+    request_count = 0
     for row in table_rows[0:]:
       country_image_url = row.xpath('td')[1].css('img::attr(src)').get()
       country_name = row.xpath('td')[1].css('img::attr(title)').get()
@@ -90,12 +91,13 @@ class CompetitionsSpider(BaseSpider):
       }
 
       yield response.follow(self.base_url + href, self.parse_competitions, cb_kwargs=cb_kwargs)
-
+      request_count += 1
+      
   def parse_competitions(self, response, base):
     """Parse competitions from the country competitions page.
 
     @url https://www.transfermarkt.co.uk/wettbewerbe/national/wettbewerbe/157
-    @returns items 3 3
+    @returns items 5 5
     @cb_kwargs {"base": {"href": "some_href/3", "type": "competition", "parent": {}, "country_id": 1, "country_name": "n", "country_code": "CC"}}
     @scrapes type href parent country_id country_name country_code competition_type
     """
