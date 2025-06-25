@@ -151,7 +151,7 @@ class ClubsSpider(BaseSpider):
             #      len(tds) == 11  …icon present  (extra td right after nat flags)
             # We calculate the offset once and index from the *end* for stability.
             # ------------------------------------------------------------------
-            self.logger.debug("📦 %s", tds)
+            self.logger.debug("PAY ATTENTION TO THIS: %s", tds)
 
             dob_age_td       = tds[4]                          # same in both cases
             nat_td           = tds[5]                          # flags td
