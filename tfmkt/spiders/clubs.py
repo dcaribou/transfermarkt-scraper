@@ -154,14 +154,14 @@ class ClubsSpider(BaseSpider):
             offset = 0 if len(tds) == 10 else 1
             self.logger.debug("PAY ATTENTION TO THIS: %s", len(tds))        
 
-            dob_age_td       = tds[4]                          # same in both cases
-            nat_td           = tds[5]                          # flags td
-            height_td        = tds[6]
-            foot_td          = tds[7]
-            joined_td        = tds[8]
-            signed_from_td   = tds[9]
-            contract_td      = tds[10]
-            value_td         = tds[11]
+            dob_age_td       = tds[2]                          # same in both cases
+            nat_td           = tds[3]                          # flags td
+            height_td        = tds[4]
+            foot_td          = tds[5]
+            joined_td        = tds[6]
+            signed_from_td   = tds[7]
+            contract_td      = tds[8]
+            value_td         = tds[9]
 
             dob_age = safe(dob_age_td.xpath("normalize-space()").get())
             dob, age = None, None
