@@ -115,5 +115,34 @@ class ClubsSpider(BaseSpider):
         for key, value in attributes.items():
             if isinstance(value, str):
                 attributes[key] = value.strip()
+        
+        # --- after collecting attributes ------------------------------
+        squad_url = response.url.replace("/startseite/", "/kader/") + "/plus/1"
+        cb_kwargs = {"club": {**base, **attributes}}
+        yield response.follow(squad_url, callback=self.parse_squad, cb_kwargs=cb_kwargs)
 
-        yield {**base, **attributes}
+        
+    def parse_squad(self, response, club):
+        """
+        Called only after `parse_details`.  Extracts all players listed
+        in the detailed squad page and finalises the club item.
+        """
+        def parse_player_row(tr):
+            link = tr.css("td.hauptlink a::attr(href)").get()
+            if not link:
+                return None
+            m_id = re.search(r"/spieler/(\d+)", link)
+            return {
+                "href" : link,
+                "player_id": int(m_id.group(1)) if m_id else None,
+                "name" : tr.css("td.hauptlink a::text").get().strip()
+            }
+
+        players = []
+        for tr in response.css("div.responsive-table table.items tbody tr"):
+            pl = parse_player_row(tr)
+            if pl:
+                players.append(pl)
+
+        club["players"] = players
+        yield club            #  ←  final item
