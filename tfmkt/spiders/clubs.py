@@ -119,7 +119,7 @@ class ClubsSpider(BaseSpider):
         
         # --- after collecting attributes ------------------------------
     
-
+        self.logger.debug("📦 %s", response.css("div.responsive-table table.items tbody tr"))
         def parse_player_row(tr):
             """Return a dict with all visible columns for one squad row."""
             # 1️⃣ shirt-number (may be “-”)
