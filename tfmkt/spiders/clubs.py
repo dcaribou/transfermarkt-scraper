@@ -49,8 +49,8 @@ class ClubsSpider(BaseSpider):
                         'parent': parent  # parent is the competition item (which should already have correct competition_code, etc.)
                     }
                 }
-
-                yield response.follow(club_href, self.parse_details, cb_kwargs=cb_kwargs)
+                squad_url = club_href.replace("/startseite/", "/kader/") + "/plus/1"
+                yield response.follow(squad_url, self.parse_details, cb_kwargs=cb_kwargs)
 
     def parse_details(self, response, base):
         """
@@ -61,6 +61,7 @@ class ClubsSpider(BaseSpider):
         @cb_kwargs {"base": {"href": "some_href/path/to/code", "type": "club", "parent": {}}}
         @scrapes href type parent
         """
+        safe = self.safe_strip
         attributes = {}
 
         # Extract market value from the "dataMarktwert" section
@@ -117,33 +118,57 @@ class ClubsSpider(BaseSpider):
                 attributes[key] = value.strip()
         
         # --- after collecting attributes ------------------------------
-        squad_url = response.url.replace("/startseite/", "/kader/") + "/plus/1"
-        cb_kwargs = {"club": {**base, **attributes}}
-        yield response.follow(squad_url, callback=self.parse_squad, cb_kwargs=cb_kwargs)
-        # print all the json data of this club
-        print(f"Club: {attributes}")
-        
-    def parse_squad(self, response, club):
-        """
-        Called only after `parse_details`.  Extracts all players listed
-        in the detailed squad page and finalises the club item.
-        """
-        def parse_player_row(tr):
-            link = tr.css("td.hauptlink a::attr(href)").get()
+       
+        def parse_row(tr):
+            # first <td> → squad number
+            number = safe(tr.css("td:nth-child(1) div.rn_nummer::text").get())
+            # second <td> contains the inline-table with link + position
+            link  = tr.css("td.hauptlink a::attr(href)").get()
             if not link:
                 return None
-            m_id = re.search(r"/spieler/(\d+)", link)
+            m_id  = re.search(r"/spieler/(\d+)", link)
+            pos   = safe(tr.css("td.hauptlink table.inline-table tr:nth-child(2) td::text").get())
+
+            dob_age = safe(tr.css("td:nth-child(3)::text").get())
+            dob, age = None, None
+            if dob_age:
+                parts = dob_age.split("(")
+                dob  = safe(parts[0])
+                if len(parts) > 1 and parts[1].rstrip(")").isdigit():
+                    age = int(parts[1].rstrip(")"))
+
+            nat = ", ".join(
+                safe(img.attrib.get("title"))
+                for img in tr.css("td:nth-child(4) img")
+                if safe(img.attrib.get("title"))
+            ) or None
+
             return {
-                "href" : link,
-                "player_id": int(m_id.group(1)) if m_id else None,
-                "name" : tr.css("td.hauptlink a::text").get().strip()
+                "player_id"        : int(m_id.group(1)) if m_id else None,
+                "href"             : link,
+                "number"           : None if number in {"-", ""} else number,
+                "name"             : safe(tr.css("td.hauptlink a::text").get()),
+                "position"         : pos,
+                "date_of_birth"    : dob,
+                "age"              : age,
+                "nationality"      : nat,
+                "height"           : safe(tr.css("td:nth-child(5)::text").get()),
+                "foot"             : safe(tr.css("td:nth-child(6)::text").get()),
+                "joined"           : safe(tr.css("td:nth-child(7)::text").get()),
+                "signed_from_href" : tr.css("td:nth-child(8) a::attr(href)").get(),
+                "signed_from_name" : safe(tr.css("td:nth-child(8) a::attr(title)").get()),
+                "contract_expires" : safe(tr.css("td:nth-child(9)::text").get()),
+                "market_value"     : safe(tr.css("td:nth-child(10) a::text").get()),
             }
 
-        players = []
-        for tr in response.css("div.responsive-table table.items tbody tr"):
-            pl = parse_player_row(tr)
-            if pl:
-                players.append(pl)
+        players = [
+            row for row in
+            (parse_row(tr) for tr in response.css("div.responsive-table table.items tbody tr"))
+            if row
+        ]
 
-        club["players"] = players
-        yield club            #  ←  final item
+        club_item = {**base, **attributes, "players": players}
+        self.logger.debug("📦 %s", club_item)   # debug so you can silence it with -L INFO
+        yield club_item
+        
+    
