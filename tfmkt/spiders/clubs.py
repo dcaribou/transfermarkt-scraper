@@ -130,6 +130,8 @@ class ClubsSpider(BaseSpider):
             if not link:
                 return None
             m_id  = re.search(r"/spieler/(\d+)", link)
+            if not m_id:
+                return None
 
             # 3️⃣ position (second line of the inline-table)
             position = safe(
