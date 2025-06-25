@@ -120,7 +120,8 @@ class ClubsSpider(BaseSpider):
         squad_url = response.url.replace("/startseite/", "/kader/") + "/plus/1"
         cb_kwargs = {"club": {**base, **attributes}}
         yield response.follow(squad_url, callback=self.parse_squad, cb_kwargs=cb_kwargs)
-
+        # print all the json data of this club
+        print(f"Club: {attributes}")
         
     def parse_squad(self, response, club):
         """
