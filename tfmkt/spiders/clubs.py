@@ -151,17 +151,17 @@ class ClubsSpider(BaseSpider):
             #      len(tds) == 11  …icon present  (extra td right after nat flags)
             # We calculate the offset once and index from the *end* for stability.
             # ------------------------------------------------------------------
-            offset = 0 if len(tds) == 10 else 1
+            
             self.logger.debug("PAY ATTENTION TO THIS: %s", len(tds))        
 
-            dob_age_td       = tds[2]                          # same in both cases
-            nat_td           = tds[3]                          # flags td
-            height_td        = tds[4]
-            foot_td          = tds[5]
-            joined_td        = tds[6]
-            signed_from_td   = tds[7]
-            contract_td      = tds[8]
-            value_td         = tds[9]
+            dob_age_td       = tds[-8]                          # same in both cases
+            nat_td           = tds[-7]                          # flags td
+            height_td        = tds[-6]
+            foot_td          = tds[-5]
+            joined_td        = tds[-4]
+            signed_from_td   = tds[-3]
+            contract_td      = tds[-2]
+            value_td         = tds[-1]
 
             dob_age = safe(dob_age_td.xpath("normalize-space()").get())
             dob, age = None, None
