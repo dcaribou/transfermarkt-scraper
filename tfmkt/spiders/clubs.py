@@ -122,11 +122,9 @@ class ClubsSpider(BaseSpider):
         seen_player_ids: set[int] = set()          # <- de-duplicate whole table
 
         def parse_player_row(tr):
-            link = tr.css("td.posrela a[href*='/profil/spieler/']::attr(href)").get()
-            # fallback – some languages / older pages omit '/profil/'
-            if not link:
-                link = tr.css("td.posrela a[href*='/spieler/']::attr(href)").get()
-
+            link = tr.css("td.posrela a::attr(href)").get()
+            if not link:                       # header / empty spacer row
+                return None
 
             m_id = re.search(r"/spieler/(\d+)", link)
             if not m_id:
@@ -153,7 +151,7 @@ class ClubsSpider(BaseSpider):
             #      len(tds) == 11  …icon present  (extra td right after nat flags)
             # We calculate the offset once and index from the *end* for stability.
             # ------------------------------------------------------------------
-    
+            self.logger.debug("📦 %s", tds)
 
             dob_age_td       = tds[4]                          # same in both cases
             nat_td           = tds[5]                          # flags td
