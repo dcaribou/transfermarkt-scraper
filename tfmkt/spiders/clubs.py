@@ -119,70 +119,88 @@ class ClubsSpider(BaseSpider):
         
         # --- after collecting attributes ------------------------------
     
-        def parse_player_row(tr):
-            """Return a dict with all visible columns for one squad row."""
-            # 1️⃣ shirt-number (may be “-”)
-            number = safe(tr.css("td:nth-of-type(1) div.rn_nummer::text").get())
+        seen_player_ids: set[int] = set()          # <- de-duplicate whole table
 
-            # 2️⃣ link → player-id & name
-            link  = tr.css("td:nth-of-type(2) a::attr(href)").get()
-            if not link:
+        def parse_player_row(tr):
+            link = tr.css("td.posrela a::attr(href)").get()
+            if not link:                       # header / empty spacer row
                 return None
-            m_id  = re.search(r"/spieler/(\d+)", link)
+
+            m_id = re.search(r"/spieler/(\d+)", link)
             if not m_id:
                 return None
+            pid = int(m_id.group(1))
 
-            # 3️⃣ position (second line of the inline-table)
-            position = safe(
-                tr.css("td:nth-of-type(2) table.inline-table tr:nth-of-type(2) td::text").get()
-            )
+            if pid in seen_player_ids:         # icon-row duplicate → skip
+                return None
+            seen_player_ids.add(pid)
 
-            # 4️⃣ date-of-birth + age (“Apr 19, 1992 (33)”)
-            dob_age = safe(tr.css("td:nth-of-type(3)::text").get())
+            tds = tr.css("td")                 # list of *all* cells
+            # ------------------------------------------------------------------
+            # fixed columns
+            # ------------------------------------------------------------------
+            number   = safe(tds[0].css("div.rn_nummer::text").get())
+            name     = safe(tr.css("td.posrela a::text").get())
+            position = safe(tr.css("td.posrela tr:nth-child(2) td::text").get())
+
+            # ------------------------------------------------------------------
+            # variable-offset columns
+            # after the posrela cell there are either
+            #   dob-age | [icon?]nat | height | foot | joined | from | contract | value
+            # so:  len(tds) == 10  …icon missing
+            #      len(tds) == 11  …icon present  (extra td right after nat flags)
+            # We calculate the offset once and index from the *end* for stability.
+            # ------------------------------------------------------------------
+            offset = 0 if len(tds) == 10 else 1
+
+            dob_age_td       = tds[2]                          # same in both cases
+            nat_td           = tds[3]                          # flags td
+            height_td        = tds[4 + offset]
+            foot_td          = tds[5 + offset]
+            joined_td        = tds[6 + offset]
+            signed_from_td   = tds[7 + offset]
+            contract_td      = tds[8 + offset]
+            value_td         = tds[9 + offset]
+
+            dob_age = safe(dob_age_td.xpath("normalize-space()").get())
             dob, age = None, None
             if dob_age:
                 dob, _, rest = dob_age.partition("(")
                 dob = safe(dob)
                 age = int(rest.rstrip(")")) if rest.rstrip(")").isdigit() else None
 
-            # 5️⃣ nationalities – one flag per <img>
-            nationalities = [
+            nat = ", ".join(
                 safe(img.attrib.get("title"))
-                for img in tr.css("td:nth-of-type(4) img[title]")
-            ]
-            nat = ", ".join(filter(None, nationalities)) or None
+                for img in nat_td.css("img[title]")
+                if safe(img.attrib.get("title"))
+            ) or None
 
             return {
-                "player_id"        : int(m_id.group(1)),
+                "player_id"        : pid,
                 "href"             : link,
                 "number"           : None if number in {"", "-"} else number,
-                "name"             : safe(tr.css("td:nth-of-type(2) a::text").get()),
+                "name"             : name,
                 "position"         : position,
                 "date_of_birth"    : dob,
                 "age"              : age,
                 "nationality"      : nat,
-                "height"           : safe(tr.css("td:nth-of-type(5)::text").get()),
-                "foot"             : safe(tr.css("td:nth-of-type(6)::text").get()),
-                "joined"           : safe(tr.css("td:nth-of-type(7)::text").get()),
-                "signed_from_href" : tr.css("td:nth-of-type(8) a::attr(href)").get(),
-                "signed_from_name" : safe(tr.css("td:nth-of-type(8) a::attr(title)").get()),
-                "contract_expires" : safe(tr.css("td:nth-of-type(9)::text").get()),
-                "market_value"     : safe(tr.css("td:nth-of-type(10) a::text").get()),
+                "height"           : safe(height_td.xpath("text()").get()),
+                "foot"             : safe(foot_td.xpath("text()").get()),
+                "joined"           : safe(joined_td.xpath("text()").get()),
+                "signed_from_href" : signed_from_td.css("a::attr(href)").get(),
+                "signed_from_name" : safe(signed_from_td.css("a::attr(title)").get()),
+                "contract_expires" : safe(contract_td.xpath("text()").get()),
+                "market_value"     : safe(value_td.css("a::text").get()),
             }
 
-        # collect all <tr> in the responsive squad-table
+        # ──────────────────────────────────────────────────────────────
+        # collect the rows (inside parse_details, replacing previous loop)
+        # ──────────────────────────────────────────────────────────────
         players = [
-            row for row in
-            (parse_player_row(tr)
-            for tr in response.css("div.responsive-table table.items tbody tr"))
-            if row
+            row for tr in response.css("div.responsive-table table.items tbody tr")
+            if (row := parse_player_row(tr))
         ]
 
-        # merge everything into the final item  – NOTE: **attributes** not *attr*
         club_item = {**base, **attributes, "players": players}
-
-        self.logger.debug("📦 club item: %s", club_item)   # quick sanity-check
+        self.logger.debug("📦 %s", club_item)
         yield club_item
-
-        
-    
