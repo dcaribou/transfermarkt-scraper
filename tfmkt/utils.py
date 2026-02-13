@@ -1,15 +1,3 @@
-def uri_params(params, spider):
-    """uri_params is used by scrapy to generate additional parameters for URI generation.
-
-    https://docs.scrapy.org/en/latest/topics/feed-exports.html?highlight=FEED_URI#std-setting-FEED_URI_PARAMS
-
-    :param params: A dict with default parameters that can be enhanced with addtional keys.
-    :type params: dict
-    :return: A new dict with addtional keys.
-    :rtype: Spider
-    """
-    return {**params, "season": spider.season}
-
 def background_position_in_px_to_minute(px_x: int, px_y: int) -> int:
     """Convert background-position arguments from the "sb-sprite-uhr-klein" CSS class to the game minute.
     This CSS class uses some smartness that moves the this image around so as to choose the game minutes

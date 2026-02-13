@@ -1,13 +1,9 @@
-FROM python:3.11
+FROM python:3.12
 
 WORKDIR /app
 
-RUN apt-get update && \
-    apt-get -y install gcc python3-dev
-
 COPY pyproject.toml /app
 COPY tfmkt tfmkt
-COPY scrapy.cfg .
 
 ENV PYTHONPATH=${PYTHONPATH}:${PWD}
 

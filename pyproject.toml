@@ -1,18 +1,21 @@
 [tool.poetry]
 name = "transfermarkt-scraper"
-version = "0.4.0"
+version = "0.5.0"
 description = "Collects data from Transfermarkt website"
 authors = ["dcaribou <davidcereijo@live.com>"]
 packages = [{include = "tfmkt"}]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.10"
 inflection = "^0.5.1"
-Protego = "^0.2.1"
 python-dateutil = "^2.8.2"
-scrapy = "^2.11.0"
+crawlee = {extras = ["parsel"], version = "^1.0"}
 
 [tool.poetry.dev-dependencies]
+pytest = "^7.0"
+
+[tool.poetry.scripts]
+tfmkt = "tfmkt.cli:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
