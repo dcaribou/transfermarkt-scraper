@@ -6,12 +6,12 @@ authors = ["dcaribou <davidcereijo@live.com>"]
 packages = [{include = "tfmkt"}]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.12"
 inflection = "^0.5.1"
 python-dateutil = "^2.8.2"
 crawlee = {extras = ["parsel"], version = "^1.0"}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = "^7.0"
 
 [tool.poetry.scripts]
