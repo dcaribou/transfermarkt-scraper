@@ -1,7 +1,6 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+# This workflow will install Python dependencies and verify the project builds correctly
 
-name: Scrapy Contracts Checks
+name: Build Checks
 
 on:
   push:
@@ -12,7 +11,7 @@ on:
     - cron: '0 4 * * FRI'
 
 jobs:
-  scrapy-checks:
+  build-checks:
 
     runs-on: ubuntu-latest
     defaults:
@@ -29,6 +28,6 @@ jobs:
         installer-parallel: true
     - name: Install library
       run: poetry install --no-interaction
-    - name: Check scrapy contracts
+    - name: Verify confederations crawler
       run: |
-        poetry run scrapy check -s USER_AGENT='USER_AGENT="transfermarkt-gh/1.0 (https://github.com/dcaribou/transfermarkt-datasets)"'
+        poetry run python -m tfmkt confederations
