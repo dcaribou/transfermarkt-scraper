@@ -1,9 +1,26 @@
 import json
+import re
 
 from crawlee import Request
 from crawlee.crawlers import ParselCrawler
 
 from tfmkt.common import DEFAULT_BASE_URL, load_parents, build_initial_requests, safe_strip
+
+
+def _parse_age_from_text(text):
+    """Extract age from text like '(34 years old)'."""
+    if not text:
+        return None
+    match = re.search(r'\((\d+) years? old\)', text)
+    return match.group(1) if match else None
+
+
+def _parse_market_value(position_text):
+    """Extract market value from position text like 'Centre-Back, €40.00m'."""
+    if not position_text or ',' not in position_text:
+        return None
+    parts = position_text.split(',', 1)
+    return safe_strip(parts[1]) if len(parts) > 1 else None
 
 
 async def run(parents_arg=None, season=2024, base_url=None):
@@ -89,13 +106,27 @@ async def run(parents_arg=None, season=2024, base_url=None):
                 if number_idx:
                     player = {}
                     player['number'] = e.xpath("./td/div[@class = 'rn_nummer']/text()").get()
+                    # Nationality flags are in td[2] of the number row
+                    nationalities = e.xpath("./td[contains(@class, 'zentriert')]//img[contains(@class, 'flaggenrahmen')]/@title").getall()
+                    if nationalities:
+                        player['player_nationality'] = nationalities
                 elif player_idx:
                     player['href'] = e.xpath("./td/a/@href").get()
                     player['name'] = e.xpath("./td/a/@title").get()
                     player['team_captain'] = 1 if e.xpath("./td/span/@title").get() else 0
+                    # Age is in the text like "(34 years old)" in the player name cell
+                    all_text = ''.join(e.xpath(".//td//text()").getall())
+                    age = _parse_age_from_text(all_text)
+                    if age:
+                        player['player_age'] = age
                 elif position_idx:
-                    position = safe_strip(e.xpath("./td/text()").get().split(',')[0])
-                    player['position'] = position
+                    position_text = safe_strip(e.xpath("./td/text()").get())
+                    position = position_text.split(',')[0] if position_text else ''
+                    player['position'] = safe_strip(position)
+                    # Market value is after the comma in the position text
+                    market_value = _parse_market_value(position_text)
+                    if market_value:
+                        player['player_market_value'] = market_value
                     if "Back" in position or "Defender" in position or "defender" in position:
                         defenders_count += 1
                     elif "Midfield" in position or "midfield" in position:
@@ -136,18 +167,52 @@ async def run(parents_arg=None, season=2024, base_url=None):
                 if number_idx:
                     player = {}
                     player['number'] = e.xpath("./td/div[@class = 'rn_nummer']/text()").get()
+                    nationalities = e.xpath("./td[contains(@class, 'zentriert')]//img[contains(@class, 'flaggenrahmen')]/@title").getall()
+                    if nationalities:
+                        player['player_nationality'] = nationalities
                 elif player_idx:
                     player['href'] = e.xpath("./td/a/@href").get()
                     player['name'] = e.xpath("./td/a/@title").get()
                     player['team_captain'] = 1 if e.xpath("./td/span/@title").get() else 0
+                    all_text = ''.join(e.xpath(".//td//text()").getall())
+                    age = _parse_age_from_text(all_text)
+                    if age:
+                        player['player_age'] = age
                 elif position_idx:
-                    player['position'] = safe_strip(e.xpath("./td/text()").get().split(',')[0])
+                    position_text = safe_strip(e.xpath("./td/text()").get())
+                    player['position'] = position_text.split(',')[0] if position_text else ''
+                    market_value = _parse_market_value(position_text)
+                    if market_value:
+                        player['player_market_value'] = market_value
 
                 if position_idx:
                     if i == 0:
                         lineups['home_club']['substitutes'].append(player)
                     else:
                         lineups['away_club']['substitutes'].append(player)
+
+        # Extract manager info for each team
+        # Managers are in separate "Manager" headline boxes (one per team)
+        manager_boxes = sel.xpath(
+            "//div[./h2[contains(@class, 'content-box-headline')] "
+            "and normalize-space(./h2) = 'Manager']"
+        )
+        for i, box in enumerate(manager_boxes):
+            club_key = 'home_club' if i == 0 else 'away_club'
+            trainer_link = box.xpath(
+                ".//a[@class='wichtig' and contains(@href, 'profil/trainer')]"
+            )
+            if trainer_link:
+                manager = {
+                    'manager_name': safe_strip(trainer_link.xpath("text()").get()),
+                    'href': trainer_link.xpath("@href").get(),
+                }
+                mgr_nationality = box.xpath(
+                    ".//img[contains(@class, 'flaggenrahmen')]/@title"
+                ).getall()
+                if mgr_nationality:
+                    manager['manager_nationality'] = mgr_nationality
+                lineups[club_key]['manager'] = manager
 
         item = {
             'type': 'game_lineups',

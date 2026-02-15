@@ -39,6 +39,16 @@ def test_competitions(tmp_path):
         assert "href" in item
         assert "competition_type" in item
 
+    # New: competition_name should be present on all items
+    for item in items:
+        assert "competition_name" in item
+
+    # New: average_market_value on domestic items (those with country data)
+    domestic = [i for i in items if "country_name" in i]
+    assert len(domestic) > 0
+    for item in domestic:
+        assert "average_market_value" in item
+
 
 # ---------------------------------------------------------------------------
 # 3. Clubs (~25 requests — 1 small league)
@@ -62,6 +72,11 @@ def test_clubs(tmp_path):
         assert "name" in item
         assert "squad_size" in item
 
+    # New: club_image_url on all items, coach_href on most items
+    for item in items:
+        assert "club_image_url" in item
+    assert any(item.get("coach_href") for item in items)
+
 
 # ---------------------------------------------------------------------------
 # 4. Players (~39 requests — 1 tiny club)
@@ -84,6 +99,12 @@ def test_players(tmp_path):
         assert "name" in item
         assert "date_of_birth" in item
         assert "position" in item
+
+    # New: full_name should be present on most players
+    assert any(item.get("full_name") for item in items)
+
+    # New: additional_citizenships only present for multi-citizenship players (soft check)
+    # New: national_team only for international players (soft check)
 
 
 # ---------------------------------------------------------------------------
@@ -133,6 +154,23 @@ def test_games(tmp_path):
     assert "events" in game
     assert isinstance(game["events"], list)
 
+    # New: club names
+    assert "home_club_name" in game
+    assert "away_club_name" in game
+
+    # New: referee_href
+    assert "referee_href" in game
+
+    # New: half_time_score and kickoff_time (may be None but key should exist)
+    assert "half_time_score" in game
+    assert "kickoff_time" in game
+
+    # New: manager hrefs (if managers are present)
+    if "home_manager" in game:
+        assert "href" in game["home_manager"]
+    if "away_manager" in game:
+        assert "href" in game["away_manager"]
+
 
 # ---------------------------------------------------------------------------
 # 7. Game Lineups (2 requests — 1 game)
@@ -161,3 +199,10 @@ def test_game_lineups(tmp_path):
     assert len(lineup["away_club"]["starting_lineup"]) == 11
     assert lineup["home_club"]["formation"] is not None
     assert lineup["away_club"]["formation"] is not None
+
+    # New: player nationality should be present on at least some players
+    all_players = (
+        lineup["home_club"]["starting_lineup"]
+        + lineup["away_club"]["starting_lineup"]
+    )
+    assert any("player_nationality" in p for p in all_players)

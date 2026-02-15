@@ -137,7 +137,17 @@ async def run(parents_arg=None, season=2024, base_url=None):
         away_club_box = game_box.css('div.sb-gast')
 
         home_club_href = home_club_box.css('a::attr(href)').get()
+        home_club_name = safe_strip(
+            home_club_box.xpath('.//a/@title').get()
+        ) or safe_strip(
+            home_club_box.xpath('.//a/img/@alt').get()
+        )
         away_club_href = away_club_box.css('a::attr(href)').get()
+        away_club_name = safe_strip(
+            away_club_box.xpath('.//a/@title').get()
+        ) or safe_strip(
+            away_club_box.xpath('.//a/img/@alt').get()
+        )
 
         home_club_position = home_club_box[0].xpath('p/text()').get()
         away_club_position = away_club_box[0].xpath('p/text()').get()
@@ -157,12 +167,25 @@ async def run(parents_arg=None, season=2024, base_url=None):
         stadium = safe_strip(venue_box.xpath('node()')[1].xpath('a/text()').get())
         attendance = safe_strip(venue_box.xpath('node()')[1].xpath('strong/text()').get())
         referee = safe_strip(venue_box.xpath('a[contains(@href, "schiedsrichter")]/@title').get())
+        referee_href = venue_box.xpath('a[contains(@href, "schiedsrichter")]/@href').get()
 
         result_box = game_box.css('div.ergebnis-wrap')
         result = safe_strip(result_box.css('div.sb-endstand::text').get())
+        half_time_score = safe_strip(result_box.css('div.sb-halbzeit::text').get())
+
+        # Kickoff time - search for time pattern in the date/time area
+        kickoff_time = None
+        for el in text_elements:
+            text = safe_strip(el.get())
+            if text and re.match(r'\d{1,2}:\d{2}', text):
+                kickoff_time = text
+                break
 
         manager_names = sel.xpath(
             "//tr[(contains(td/b/text(),'Manager')) or (contains(td/div/text(),'Manager'))]/td[2]/a/text()"
+        ).getall()
+        manager_hrefs = sel.xpath(
+            "//tr[(contains(td/b/text(),'Manager')) or (contains(td/div/text(),'Manager'))]/td[2]/a/@href"
         ).getall()
 
         game_events = (
@@ -180,25 +203,32 @@ async def run(parents_arg=None, season=2024, base_url=None):
                 'type': 'club',
                 'href': home_club_href,
             },
+            'home_club_name': home_club_name,
             'home_club_position': home_club_position,
             'away_club': {
                 'type': 'club',
                 'href': away_club_href,
             },
+            'away_club_name': away_club_name,
             'away_club_position': away_club_position,
             'result': result,
+            'half_time_score': half_time_score,
             'matchday': matchday,
             'date': date,
+            'kickoff_time': kickoff_time,
             'stadium': stadium,
             'attendance': attendance,
             'referee': referee,
+            'referee_href': referee_href,
             'events': game_events,
         }
 
         if len(manager_names) == 2:
             home_manager_name, away_manager_name = manager_names
-            item["home_manager"] = {'name': home_manager_name}
-            item["away_manager"] = {'name': away_manager_name}
+            home_manager_href = manager_hrefs[0] if len(manager_hrefs) > 0 else None
+            away_manager_href = manager_hrefs[1] if len(manager_hrefs) > 1 else None
+            item["home_manager"] = {'name': home_manager_name, 'href': home_manager_href}
+            item["away_manager"] = {'name': away_manager_name, 'href': away_manager_href}
 
         print(json.dumps(item), flush=True)
 

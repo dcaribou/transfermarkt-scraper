@@ -72,6 +72,7 @@ async def run(parents_arg=None, season=2024, base_url=None):
             total_players = row.css('td:nth-of-type(4)::text').get()
             average_age = row.css('td:nth-of-type(5)::text').get()
             foreigner_percentage = row.css('td:nth-of-type(6) a::text').get()
+            average_market_value = row.css('td:nth-of-type(7)::text').get()
             total_value = row.css('td:nth-of-type(8)::text').get()
 
             matches = re.search(r'([0-9]+)\.png', country_image_url, re.IGNORECASE)
@@ -88,6 +89,7 @@ async def run(parents_arg=None, season=2024, base_url=None):
                 'total_players': total_players,
                 'average_age': average_age,
                 'foreigner_percentage': foreigner_percentage,
+                'average_market_value': average_market_value,
                 'total_value': total_value,
             }
 
@@ -135,10 +137,13 @@ async def run(parents_arg=None, season=2024, base_url=None):
             ]:
                 parameterized_tier = underscore(parameterize(tier))
                 competition_row = box_rows[idx + 1]
-                competition_href = competition_row.xpath('td/table//td')[1].xpath('a/@href').get()
+                competition_cell = competition_row.xpath('td/table//td')[1]
+                competition_href = competition_cell.xpath('a/@href').get()
+                competition_name = competition_cell.xpath('a/text()').get()
                 domestic_competitions.append({
                     'type': 'competition',
                     'competition_type': parameterized_tier,
+                    'competition_name': competition_name,
                     'href': competition_href,
                 })
 
@@ -158,6 +163,7 @@ async def run(parents_arg=None, season=2024, base_url=None):
 
                 international_competitions[parameterized_tier] = {
                     'type': 'competition',
+                    'competition_name': tier,
                     'href': competition_href_wo_season,
                     'competition_type': parameterized_tier,
                 }

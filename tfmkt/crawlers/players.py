@@ -81,9 +81,17 @@ async def run(parents_arg=None, season=2024, base_url=None):
         attributes['height'] = sel.xpath(
             "//span[text()='Height:']/following::span[1]/text()"
         ).get()
-        attributes['citizenship'] = sel.xpath(
-            "//span[text()='Citizenship:']/following::span[1]/img/@title"
+        # Full name is the "Name in home country" which is the official full name
+        attributes['full_name'] = sel.xpath(
+            "//span[text()='Name in home country:']/following::span[1]/text()"
         ).get()
+
+        all_citizenships = sel.xpath(
+            "//span[text()='Citizenship:']/following::span[1]/img/@title"
+        ).getall()
+        attributes['citizenship'] = all_citizenships[0] if all_citizenships else None
+        if len(all_citizenships) > 1:
+            attributes['additional_citizenships'] = all_citizenships[1:]
         attributes['position'] = safe_strip(sel.xpath(
             "//span[text()='Position:']/following::span[1]/text()"
         ).get())
@@ -118,6 +126,27 @@ async def run(parents_arg=None, season=2024, base_url=None):
         attributes['outfitter'] = sel.xpath(
             "//span[text()='Outfitter:']/following::span[1]/text()"
         ).get()
+
+        # National team info (in the data-header section)
+        national_player_li = sel.xpath("//li[contains(text(), 'National player:')]")
+        if national_player_li:
+            national_team_country = safe_strip(
+                national_player_li.xpath(".//span/img/@title").get()
+            )
+            national_team_href = national_player_li.xpath(".//span/a/@href").get()
+            if national_team_href:
+                attributes['national_team'] = {
+                    'country': national_team_country,
+                    'href': national_team_href,
+                }
+
+        # International caps and goals (in the data-header section)
+        caps_goals_li = sel.xpath("//li[contains(text(), 'Caps/Goals:')]")
+        if caps_goals_li:
+            caps_goals_values = caps_goals_li.xpath("a/text()").getall()
+            if len(caps_goals_values) >= 2:
+                attributes['international_caps'] = safe_strip(caps_goals_values[0])
+                attributes['international_goals'] = safe_strip(caps_goals_values[1])
 
         current_market_value_text = safe_strip(sel.xpath(
             "//div[@class='tm-player-market-value-development__current-value']/text()"

@@ -35,3 +35,6 @@ jobs:
     - name: Verify confederations crawler
       run: |
         poetry run python -m tfmkt confederations
+    - name: Run tests
+      run: |
+        poetry run python -m pytest tests/test_crawlers.py -v

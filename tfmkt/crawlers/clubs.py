@@ -85,9 +85,27 @@ async def run(parents_arg=None, season=2024, base_url=None):
             sel.xpath("//li[contains(text(),'Current transfer record:')]/span/span/a/text()").get()
         )
 
-        attributes['coach_name'] = (
-            sel.xpath('//div[contains(@data-viewport, "Mitarbeiter")]//div[@class="container-hauptinfo"]/a/text()')
-            .get()
+        # Coach info from the "Coach for the season" section
+        coach_link = sel.xpath(
+            "//h2[contains(text(), 'Coach')]/..//a[contains(@href, 'profil/trainer')]"
+        )
+        if coach_link:
+            attributes['coach_name'] = coach_link[0].xpath('@title').get()
+            attributes['coach_href'] = coach_link[0].xpath('@href').get()
+        else:
+            # Fallback to legacy Mitarbeiter viewport selector
+            coach_element = sel.xpath(
+                '//div[contains(@data-viewport, "Mitarbeiter")]//div[@class="container-hauptinfo"]/a'
+            )
+            attributes['coach_name'] = coach_element.xpath('text()').get()
+            attributes['coach_href'] = coach_element.xpath('@href').get()
+
+        attributes['club_image_url'] = sel.xpath(
+            "//div[contains(@class, 'data-header__profile-container')]//img/@src"
+        ).get()
+
+        attributes['league_position'] = safe_strip(
+            sel.xpath("//li[contains(text(),'Table position:')]/span/text()").get()
         )
 
         attributes['code'] = unquote(urlparse(base["href"]).path.split("/")[1])
