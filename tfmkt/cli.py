@@ -5,8 +5,10 @@ import importlib
 CRAWLER_MODULES = {
     'confederations': 'tfmkt.crawlers.confederations',
     'competitions': 'tfmkt.crawlers.competitions',
+    'countries': 'tfmkt.crawlers.countries',
     'clubs': 'tfmkt.crawlers.clubs',
     'players': 'tfmkt.crawlers.players',
+    'national_teams': 'tfmkt.crawlers.national_teams',
     'appearances': 'tfmkt.crawlers.appearances',
     'games': 'tfmkt.crawlers.games',
     'game_lineups': 'tfmkt.crawlers.game_lineups',

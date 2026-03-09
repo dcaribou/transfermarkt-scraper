@@ -206,3 +206,70 @@ def test_game_lineups(tmp_path):
         + lineup["away_club"]["starting_lineup"]
     )
     assert any("player_nationality" in p for p in all_players)
+
+
+# ---------------------------------------------------------------------------
+# 8. Countries (~1 request — 1 small confederation)
+# ---------------------------------------------------------------------------
+
+def test_countries(tmp_path):
+    """Feed a single confederation (afrika, 1 page) to minimize requests."""
+    items = run_crawler(
+        "countries",
+        parents_data={"type": "confederation", "href": "/wettbewerbe/afrika"},
+        tmp_path=tmp_path,
+    )
+    assert len(items) > 0
+    for item in items:
+        assert item["type"] == "country"
+        assert "href" in item
+        assert "country_id" in item
+        assert "country_name" in item
+        assert "country_code" in item
+        assert "total_clubs" in item
+        assert "total_players" in item
+
+
+# ---------------------------------------------------------------------------
+# 9. National Teams (~2 requests — 1 small country)
+# ---------------------------------------------------------------------------
+
+def test_national_teams(tmp_path):
+    """Feed a single country (Wales, country_id=191)."""
+    items = run_crawler(
+        "national_teams",
+        parents_data={
+            "type": "country",
+            "href": "/wettbewerbe/national/wettbewerbe/191",
+            "country_id": "191",
+            "country_name": "Wales",
+        },
+        tmp_path=tmp_path,
+    )
+    assert len(items) >= 1
+    team = items[0]
+    assert team["type"] == "national_team"
+    assert "href" in team
+    assert "name" in team
+    assert "squad_size" in team
+
+
+# ---------------------------------------------------------------------------
+# 10. National Team Players (~30 requests — 1 national team)
+# ---------------------------------------------------------------------------
+
+def test_national_team_players(tmp_path):
+    """Feed a national team (Wales) as parent to players crawler."""
+    items = run_crawler(
+        "players",
+        parents_data={
+            "type": "national_team",
+            "href": "/wales/startseite/verein/3864",
+        },
+        tmp_path=tmp_path,
+    )
+    assert len(items) >= 5
+    for item in items:
+        assert item["type"] == "player"
+        assert "href" in item
+        assert "name" in item

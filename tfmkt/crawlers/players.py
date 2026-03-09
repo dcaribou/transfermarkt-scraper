@@ -24,7 +24,9 @@ async def run(parents_arg=None, season=2024, base_url=None):
         sel = context.selector
 
         players_table = sel.xpath("//div[@class='responsive-table']")
-        assert len(players_table) == 1
+        if not players_table:
+            players_table = sel.xpath("//table[contains(@class, 'items')]")
+        assert len(players_table) >= 1
         players_table = players_table[0]
 
         player_hrefs = players_table.xpath(
