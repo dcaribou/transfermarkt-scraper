@@ -7,6 +7,10 @@ Run all:     pytest tests/test_crawlers.py -v
 Run one:     pytest tests/test_crawlers.py::test_confederations -v
 """
 
+import json
+import subprocess
+import sys
+
 from tests.conftest import run_crawler
 
 
@@ -206,3 +210,25 @@ def test_game_lineups(tmp_path):
         + lineup["away_club"]["starting_lineup"]
     )
     assert any("player_nationality" in p for p in all_players)
+
+
+# ---------------------------------------------------------------------------
+# 8. Error propagation — non-zero exit on failed requests
+# ---------------------------------------------------------------------------
+
+def test_crawler_exits_nonzero_on_scraping_error(tmp_path):
+    """A request that fails all retries should cause a non-zero exit code."""
+    parents_file = tmp_path / "parents.json"
+    parents_file.write_text(json.dumps({
+        "type": "competition",
+        "competition_type": "first_tier",
+        "href": "/this-does-not-exist/startseite/wettbewerb/ZZZZZ",
+    }) + "\n")
+
+    cmd = [sys.executable, "-m", "tfmkt", "clubs", "-p", str(parents_file)]
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+
+    assert result.returncode != 0, (
+        f"Expected non-zero exit code for a failing crawler, got {result.returncode}\n"
+        f"stderr: {result.stderr}"
+    )

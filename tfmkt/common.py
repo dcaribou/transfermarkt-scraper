@@ -4,10 +4,35 @@ import gzip
 import logging
 
 from crawlee import Request
+from crawlee.crawlers import ParselCrawler
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_BASE_URL = 'https://www.transfermarkt.co.uk'
+
+
+def create_crawler():
+    """Create a ParselCrawler that tracks failed requests.
+
+    Returns a (crawler, failures) tuple. After crawler.run(), call
+    check_failures(failures) to exit with non-zero status if any requests failed.
+    """
+    failures = []
+    crawler = ParselCrawler()
+
+    @crawler.failed_request_handler
+    async def on_failed_request(context, error):
+        failures.append((context.request.url, error))
+
+    return crawler, failures
+
+
+def check_failures(failures):
+    """Exit with status 1 if there were any failed requests."""
+    if failures:
+        for url, error in failures:
+            logger.error("Failed to scrape %s: %s", url, error)
+        sys.exit(1)
 
 
 def safe_strip(word):

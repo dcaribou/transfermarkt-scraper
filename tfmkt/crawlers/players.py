@@ -4,9 +4,8 @@ import logging
 from urllib.parse import unquote, urlparse
 
 from crawlee import Request
-from crawlee.crawlers import ParselCrawler
 
-from tfmkt.common import DEFAULT_BASE_URL, load_parents, build_initial_requests, safe_strip
+from tfmkt.common import DEFAULT_BASE_URL, load_parents, build_initial_requests, safe_strip, create_crawler, check_failures
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +15,7 @@ async def run(parents_arg=None, season=2024, base_url=None):
     parents = load_parents(parents_arg)
     requests = build_initial_requests(parents, season, base_url, label='parse', spider_name='players')
 
-    crawler = ParselCrawler()
+    crawler, failures = create_crawler()
 
     @crawler.router.handler('parse')
     async def parse(context) -> None:
@@ -178,6 +177,7 @@ async def run(parents_arg=None, season=2024, base_url=None):
         print(json.dumps(item), flush=True)
 
     await crawler.run(requests)
+    check_failures(failures)
 
 
 def parse_market_history(selector, url):
