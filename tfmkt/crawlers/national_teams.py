@@ -4,7 +4,6 @@ from urllib.parse import unquote, urlparse
 
 from crawlee import Request
 from crawlee.crawlers import ParselCrawler
-
 from tfmkt.common import DEFAULT_BASE_URL, load_parents, build_initial_requests, safe_strip
 
 

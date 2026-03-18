@@ -8,10 +8,20 @@ A web scraper for collecting data from [Transfermarkt](https://www.transfermarkt
 [competitions](https://www.transfermarkt.co.uk/wettbewerbe/europa),
 [games](https://www.transfermarkt.co.uk/premier-league/gesamtspielplan/wettbewerb/GB1/saison_id/2020),
 [clubs](https://www.transfermarkt.co.uk/premier-league/startseite/wettbewerb/GB1),
-[players](https://www.transfermarkt.co.uk/manchester-city/kader/verein/281/saison_id/2019) and [appearances](https://www.transfermarkt.co.uk/sergio-aguero/leistungsdaten/spieler/26399), and extract them as JSON objects.
+[players](https://www.transfermarkt.co.uk/manchester-city/kader/verein/281/saison_id/2019),
+[appearances](https://www.transfermarkt.co.uk/sergio-aguero/leistungsdaten/spieler/26399),
+[national teams](https://www.transfermarkt.co.uk/england/startseite/verein/3299) and their competitions, and extract them as JSON objects.
+
+The scraper follows two parallel hierarchies:
 
 ```console
-====> Confederations ====> Competitions ====> (Clubs, Games) ====> Players ====> Appearances
+# Club football
+Confederations ====> Competitions ====> Clubs ====> Players ====> Appearances
+                                    ====> Games ====> Game Lineups
+
+# International football
+Confederations ====> Countries ====> National Teams ====> Players ====> Appearances
+               ====> Competitions (national team competitions: World Cup, Euros, etc.)
 ```
 
 Each one of these entities can be discovered and refreshed separately by invoking the corresponding crawler.
@@ -41,6 +51,20 @@ cat competitions.json | head -2 \
     | python -m tfmkt clubs \
     | python -m tfmkt players \
     | python -m tfmkt appearances
+
+# scrape national team competitions (World Cup, Euros, Nations League, etc.)
+# these are emitted alongside domestic competitions when running the competitions crawler
+python -m tfmkt confederations \
+    | python -m tfmkt competitions \
+    | grep -v '"country_name"' > national_team_competitions.json
+
+# scrape national team squads
+python -m tfmkt confederations \
+    | python -m tfmkt countries \
+    | python -m tfmkt national_teams > national_teams.json
+
+# scrape players from a national team squad
+cat national_teams.json | head -1 | python -m tfmkt players
 ```
 
 Alternatively you can also use [`dcaribou/transfermarkt-scraper`](https://hub.docker.com/repository/docker/dcaribou/transfermarkt-scraper) docker image
@@ -52,7 +76,21 @@ docker run \
     python -m tfmkt competitions -p samples/confederations.json
 ```
 
-Items are extracted in JSON format with one JSON object per item (confederation, league, club, player or appearance), which get printed to the `stdout`. Samples of extracted data are provided in the [samples](samples) folder.
+Items are extracted in JSON format with one JSON object per item, which get printed to the `stdout`. Samples of extracted data are provided in the [samples](samples) folder.
+
+### Crawlers
+
+| Crawler | Input | Output | Notes |
+|---|---|---|---|
+| `confederations` | — | Confederation | 5 items: Europa, América, África, Asia, FIFA |
+| `competitions` | Confederation | Competition | Domestic + national team competitions per confederation |
+| `countries` | Confederation | Country | One item per country (league-bearing nations) |
+| `clubs` | Competition (`first_tier`) | Club | Club squads with market value, coach, stadium |
+| `national_teams` | Country | National Team | Senior national team per country |
+| `players` | Club or National Team | Player | Full player profile including market value history |
+| `appearances` | Player | Appearance | Per-match stats for every game played |
+| `games` | Competition | Game | Match result, events, managers |
+| `game_lineups` | Game | Game Lineups | Starting XI, substitutes, formation |
 
 Check out [transfermarkt-datasets](https://github.com/dcaribou/transfermarkt-datasets) to see `transfermarkt-scraper` in action on a real project.
 

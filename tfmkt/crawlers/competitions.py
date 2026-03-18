@@ -26,7 +26,9 @@ async def run(parents_arg=None, season=2024, base_url=None):
         parent = context.request.user_data.get('parent', {})
 
         current_url = context.request.url
-        if '?page=' not in current_url:
+        is_fifa_page = '/wettbewerbe/fifa' in current_url
+
+        if '?page=' not in current_url and not is_fifa_page:
             confederation_pages = {
                 '/wettbewerbe/europa': 6,
                 '/wettbewerbe/amerika': 3,
@@ -55,11 +57,54 @@ async def run(parents_arg=None, season=2024, base_url=None):
                 if page_requests:
                     await context.add_requests(page_requests)
 
+        # Extract national team competitions from headerless boxes on the confederation
+        # page itself (page 1 only). Each confederation page has two headerless div.box
+        # blocks: the first contains international club competitions (CL, EL, etc.) and
+        # the second contains national team competitions (Euro, Nations League, etc.).
+        # The FIFA page (/wettbewerbe/fifa) only has national team competitions.
+        if '?page=' not in current_url:
+            seen_hrefs = set()
+            for box in context.selector.css('div.box'):
+                if safe_strip(box.css('h2.content-box-headline::text').get()):
+                    continue  # skip boxes that have a heading (domestic leagues table)
+                for a in box.css(
+                    'a[href*="/startseite/wettbewerb/"], a[href*="/startseite/pokalwettbewerb/"]'
+                ):
+                    href = a.attrib.get('href', '')
+                    if 'sort=' in href or 'page=' in href or '/navigation/' in href:
+                        continue
+                    href_wo_season = re.sub(r'/saison_id/[0-9]{4}', '', href)
+                    if href_wo_season in seen_hrefs:
+                        continue
+                    seen_hrefs.add(href_wo_season)
+                    name = safe_strip(' '.join(a.css('::text').getall()))
+                    if not name:
+                        continue
+                    item = {
+                        'type': 'competition',
+                        'parent': parent,
+                        'competition_name': name,
+                        'href': href_wo_season,
+                        'competition_type': underscore(parameterize(name)),
+                    }
+                    print(json.dumps(item), flush=True)
+
+        # The FIFA page is a rankings table, not a country-league listing — skip
+        # the country row extraction that feeds parse_competitions.
+        if is_fifa_page:
+            return
+
         table_rows = context.selector.css('table.items tbody tr.odd, table.items tbody tr.even')
 
         new_requests = []
         for row in table_rows:
             country_image_url = row.xpath('td')[1].css('img::attr(src)').get()
+            if not country_image_url:
+                continue
+            matches = re.search(r'([0-9]+)\.png', country_image_url, re.IGNORECASE)
+            if not matches:
+                continue
+
             country_name = row.xpath('td')[1].css('img::attr(title)').get()
             country_code = (
                 row.xpath('td')[0]
@@ -75,9 +120,7 @@ async def run(parents_arg=None, season=2024, base_url=None):
             average_market_value = row.css('td:nth-of-type(7)::text').get()
             total_value = row.css('td:nth-of-type(8)::text').get()
 
-            matches = re.search(r'([0-9]+)\.png', country_image_url, re.IGNORECASE)
             country_id = matches.group(1)
-
             href = "/wettbewerbe/national/wettbewerbe/" + country_id
 
             cb_data = {

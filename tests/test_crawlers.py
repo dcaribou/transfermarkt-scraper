@@ -16,10 +16,12 @@ from tests.conftest import run_crawler
 
 def test_confederations():
     items = run_crawler("confederations")
-    assert len(items) == 4
+    assert len(items) == 5
     for item in items:
         assert item["type"] == "confederation"
         assert item["href"].startswith("/wettbewerbe/")
+    hrefs = [item["href"] for item in items]
+    assert "/wettbewerbe/fifa" in hrefs
 
 
 # ---------------------------------------------------------------------------
@@ -38,16 +40,34 @@ def test_competitions(tmp_path):
         assert item["type"] == "competition"
         assert "href" in item
         assert "competition_type" in item
-
-    # New: competition_name should be present on all items
-    for item in items:
         assert "competition_name" in item
 
-    # New: average_market_value on domestic items (those with country data)
+    # Domestic competitions have country data and market value
     domestic = [i for i in items if "country_name" in i]
     assert len(domestic) > 0
     for item in domestic:
         assert "average_market_value" in item
+
+    # National team competitions (AFCON, WC qualifiers, etc.) come from the
+    # headerless boxes on the confederation page — no country fields
+    national_team = [i for i in items if "country_name" not in i]
+    assert len(national_team) > 0
+
+
+def test_competitions_fifa(tmp_path):
+    """Feed the FIFA confederation to get World Cup and qualifier competitions."""
+    items = run_crawler(
+        "competitions",
+        parents_data={"type": "confederation", "href": "/wettbewerbe/fifa"},
+        tmp_path=tmp_path,
+    )
+    assert len(items) > 0
+    for item in items:
+        assert item["type"] == "competition"
+        assert "href" in item
+        assert "competition_name" in item
+    hrefs = [item["href"] for item in items]
+    assert any("world-cup" in h or "weltmeisterschaft" in h for h in hrefs)
 
 
 # ---------------------------------------------------------------------------
@@ -247,11 +267,11 @@ def test_national_teams(tmp_path):
         tmp_path=tmp_path,
     )
     assert len(items) >= 1
-    team = items[0]
-    assert team["type"] == "national_team"
-    assert "href" in team
-    assert "name" in team
-    assert "squad_size" in team
+    for item in items:
+        assert item["type"] == "national_team"
+        assert "href" in item
+        assert "name" in item
+        assert "squad_size" in item
 
 
 # ---------------------------------------------------------------------------
