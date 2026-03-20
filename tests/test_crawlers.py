@@ -193,6 +193,33 @@ def test_games(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# 6b. Games — UEFA Euro (tournament competition, requires season=2023 for Euro 2024)
+# ---------------------------------------------------------------------------
+
+def test_games_euro(tmp_path):
+    """Feed the UEFA Euro competition (saison_id=2023 = Euro 2024)."""
+    items = run_crawler(
+        "games",
+        parents_data={
+            "type": "competition",
+            "competition_type": "uefa_euro",
+            "href": "/uefa-euro/startseite/pokalwettbewerb/EURO",
+            "competition_name": "UEFA Euro",
+        },
+        season=2023,
+        tmp_path=tmp_path,
+    )
+    assert len(items) >= 51  # Euro 2024 had 51 games
+    for item in items:
+        assert item["type"] == "game"
+        assert "game_id" in item
+        assert "home_club" in item
+        assert "away_club" in item
+        assert "result" in item
+        assert "date" in item
+
+
+# ---------------------------------------------------------------------------
 # 7. Game Lineups (2 requests — 1 game)
 # ---------------------------------------------------------------------------
 
