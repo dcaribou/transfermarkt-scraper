@@ -18,6 +18,7 @@ The scraper follows two parallel hierarchies:
 # Club football
 Confederations ====> Competitions ====> Clubs ====> Players ====> Appearances
                                     ====> Games ====> Game Lineups
+                                    ====> Tournament Editions ====> Games
 
 # International football
 Confederations ====> Countries ====> National Teams ====> Players ====> Appearances
@@ -65,6 +66,19 @@ python -m tfmkt confederations \
 
 # scrape players from a national team squad
 cat national_teams.json | head -1 | python -m tfmkt players
+
+# list all historical World Cup editions (year, winner, season id)
+echo '{"type":"competition","competition_type":"world_cup","href":"/world-cup/startseite/pokalwettbewerb/FIWC","competition_name":"World Cup"}' \
+    | python -m tfmkt tournament_editions > world_cup_editions.json
+
+# scrape games for a specific World Cup edition
+# note: Transfermarkt uses season=<year-1> for summer tournaments (e.g. 2021 for Qatar 2022)
+echo '{"type":"competition","competition_type":"world_cup","href":"/world-cup/startseite/pokalwettbewerb/FIWC","competition_name":"World Cup"}' \
+    | python -m tfmkt games --season 2021 > world_cup_2022_games.json
+
+# scrape games for UEFA Euro 2024 (season=2023 on Transfermarkt)
+echo '{"type":"competition","competition_type":"uefa_euro","href":"/uefa-euro/startseite/pokalwettbewerb/EURO","competition_name":"UEFA Euro"}' \
+    | python -m tfmkt games --season 2023 > euro_2024_games.json
 ```
 
 Alternatively you can also use [`dcaribou/transfermarkt-scraper`](https://hub.docker.com/repository/docker/dcaribou/transfermarkt-scraper) docker image
@@ -89,7 +103,8 @@ Items are extracted in JSON format with one JSON object per item, which get prin
 | `national_teams` | Country | National Team | Senior national team per country |
 | `players` | Club or National Team | Player | Full player profile including market value history |
 | `appearances` | Player | Appearance | Per-match stats for every game played |
-| `games` | Competition | Game | Match result, events, managers |
+| `tournament_editions` | Competition | Tournament Edition | Historical editions with year, season, winner, coach |
+| `games` | Competition | Game | Match result, events, managers. Use `--season` to select the edition (e.g. `--season 2021` for Qatar 2022, `--season 2023` for Euro 2024) |
 | `game_lineups` | Game | Game Lineups | Starting XI, substitutes, formation |
 
 Check out [transfermarkt-datasets](https://github.com/dcaribou/transfermarkt-datasets) to see `transfermarkt-scraper` in action on a real project.
