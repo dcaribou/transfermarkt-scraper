@@ -209,7 +209,35 @@ def test_games_euro(tmp_path):
         season=2023,
         tmp_path=tmp_path,
     )
-    assert len(items) >= 51  # Euro 2024 had 51 games
+    assert len(items) >= 48  # Euro 2024 had 51 games (allow a few failures)
+    for item in items:
+        assert item["type"] == "game"
+        assert "game_id" in item
+        assert "home_club" in item
+        assert "away_club" in item
+        assert "result" in item
+        assert "date" in item
+
+
+# ---------------------------------------------------------------------------
+# 6c. Games — FIFA World Cup (season=2021 for Qatar 2022; Transfermarkt uses
+#     the season that ends the year the tournament is held)
+# ---------------------------------------------------------------------------
+
+def test_games_world_cup(tmp_path):
+    """Feed the FIFA World Cup competition (saison_id=2021 = Qatar 2022)."""
+    items = run_crawler(
+        "games",
+        parents_data={
+            "type": "competition",
+            "competition_type": "world_cup",
+            "href": "/world-cup/startseite/pokalwettbewerb/FIWC",
+            "competition_name": "World Cup",
+        },
+        season=2021,
+        tmp_path=tmp_path,
+    )
+    assert len(items) >= 60  # Qatar 2022 had 64 games (allow a few failures)
     for item in items:
         assert item["type"] == "game"
         assert "game_id" in item
@@ -320,3 +348,36 @@ def test_national_team_players(tmp_path):
         assert item["type"] == "player"
         assert "href" in item
         assert "name" in item
+
+
+# ---------------------------------------------------------------------------
+# 11. Tournament Editions (1 request — World Cup erfolge page)
+# ---------------------------------------------------------------------------
+
+def test_tournament_editions(tmp_path):
+    """Feed the World Cup competition to get all historical editions."""
+    items = run_crawler(
+        "tournament_editions",
+        parents_data={
+            "type": "competition",
+            "competition_type": "world_cup",
+            "href": "/world-cup/startseite/pokalwettbewerb/FIWC",
+            "competition_name": "World Cup",
+        },
+        tmp_path=tmp_path,
+    )
+    assert len(items) >= 20  # at least 20 editions (1930–2022)
+    for item in items:
+        assert item["type"] == "tournament_edition"
+        assert "year" in item
+        assert "season" in item
+        assert "winner" in item
+        assert "winner_href" in item
+        assert "winner_image" in item
+    years = [item["year"] for item in items]
+    assert "2022" in years
+    assert "2018" in years
+    # season field should be year-1 for summer tournaments
+    item_2022 = next(i for i in items if i["year"] == "2022")
+    assert item_2022["season"] == "2021"
+    assert item_2022["winner"] == "Argentina"

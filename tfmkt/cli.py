@@ -10,6 +10,7 @@ CRAWLER_MODULES = {
     'players': 'tfmkt.crawlers.players',
     'national_teams': 'tfmkt.crawlers.national_teams',
     'appearances': 'tfmkt.crawlers.appearances',
+    'tournament_editions': 'tfmkt.crawlers.tournament_editions',
     'games': 'tfmkt.crawlers.games',
     'game_lineups': 'tfmkt.crawlers.game_lineups',
 }
