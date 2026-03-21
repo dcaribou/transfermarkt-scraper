@@ -85,19 +85,30 @@ async def run(parents_arg=None, season=2024, base_url=None):
 
         cb_data = {'parent': parent}
 
+        # Try named footer links first (domestic competitions)
+        next_url = None
         footer_links = sel.css('div.footer-links')
         for footer_link in footer_links:
-            text = footer_link.xpath('a//text()').get().strip()
-            if text in ["All fixtures & results", "All games"]:
+            text = footer_link.xpath('a//text()').get()
+            if text and text.strip() in ["All fixtures & results", "All games"]:
                 next_url = footer_link.xpath('a/@href').get()
-                await context.add_requests([
-                    Request.from_url(
-                        url=base_url + next_url,
-                        label='extract_game_urls',
-                        user_data={'base': cb_data},
-                    )
-                ])
-                return
+                break
+
+        # Fallback: find any gesamtspielplan link on the page (tournament competitions
+        # like UEFA Euro use a different footer link text or page layout)
+        if not next_url:
+            gesamtspielplan_links = sel.xpath('//a[contains(@href, "/gesamtspielplan/")]')
+            if gesamtspielplan_links:
+                next_url = gesamtspielplan_links[0].xpath('@href').get()
+
+        if next_url:
+            await context.add_requests([
+                Request.from_url(
+                    url=base_url + next_url,
+                    label='extract_game_urls',
+                    user_data={'base': cb_data},
+                )
+            ])
 
     @crawler.router.handler('extract_game_urls')
     async def extract_game_urls_handler(context) -> None:

@@ -5,6 +5,7 @@ DEFAULT_CONFEDERATION_HREFS = [
     '/wettbewerbe/amerika',
     '/wettbewerbe/afrika',
     '/wettbewerbe/asien',
+    '/wettbewerbe/fifa',
 ]
 
 

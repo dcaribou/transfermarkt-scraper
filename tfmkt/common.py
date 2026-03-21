@@ -68,8 +68,10 @@ def load_parents(parents_arg=None):
 
 
 def seasonize_href(item, season, base_url):
-    if item['type'] == 'club':
+    if item['type'] in ('club', 'national_team'):
         return f"{base_url}{item['href']}/saison_id/{season}"
+    elif item['type'] == 'country':
+        return f"{base_url}{item['href']}"
     elif item['type'] == 'competition':
         if item['competition_type'] == 'first_tier':
             return f"{base_url}{item['href']}/plus/0?saison_id={season}"

@@ -20,10 +20,12 @@ from tests.conftest import run_crawler
 
 def test_confederations():
     items = run_crawler("confederations")
-    assert len(items) == 4
+    assert len(items) == 5
     for item in items:
         assert item["type"] == "confederation"
         assert item["href"].startswith("/wettbewerbe/")
+    hrefs = [item["href"] for item in items]
+    assert "/wettbewerbe/fifa" in hrefs
 
 
 # ---------------------------------------------------------------------------
@@ -42,16 +44,34 @@ def test_competitions(tmp_path):
         assert item["type"] == "competition"
         assert "href" in item
         assert "competition_type" in item
-
-    # New: competition_name should be present on all items
-    for item in items:
         assert "competition_name" in item
 
-    # New: average_market_value on domestic items (those with country data)
+    # Domestic competitions have country data and market value
     domestic = [i for i in items if "country_name" in i]
     assert len(domestic) > 0
     for item in domestic:
         assert "average_market_value" in item
+
+    # National team competitions (AFCON, WC qualifiers, etc.) come from the
+    # headerless boxes on the confederation page — no country fields
+    national_team = [i for i in items if "country_name" not in i]
+    assert len(national_team) > 0
+
+
+def test_competitions_fifa(tmp_path):
+    """Feed the FIFA confederation to get World Cup and qualifier competitions."""
+    items = run_crawler(
+        "competitions",
+        parents_data={"type": "confederation", "href": "/wettbewerbe/fifa"},
+        tmp_path=tmp_path,
+    )
+    assert len(items) > 0
+    for item in items:
+        assert item["type"] == "competition"
+        assert "href" in item
+        assert "competition_name" in item
+    hrefs = [item["href"] for item in items]
+    assert any("world-cup" in h or "weltmeisterschaft" in h for h in hrefs)
 
 
 # ---------------------------------------------------------------------------
@@ -177,6 +197,61 @@ def test_games(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# 6b. Games — UEFA Euro (tournament competition, requires season=2023 for Euro 2024)
+# ---------------------------------------------------------------------------
+
+def test_games_euro(tmp_path):
+    """Feed the UEFA Euro competition (saison_id=2023 = Euro 2024)."""
+    items = run_crawler(
+        "games",
+        parents_data={
+            "type": "competition",
+            "competition_type": "uefa_euro",
+            "href": "/uefa-euro/startseite/pokalwettbewerb/EURO",
+            "competition_name": "UEFA Euro",
+        },
+        season=2023,
+        tmp_path=tmp_path,
+    )
+    assert len(items) >= 48  # Euro 2024 had 51 games (allow a few failures)
+    for item in items:
+        assert item["type"] == "game"
+        assert "game_id" in item
+        assert "home_club" in item
+        assert "away_club" in item
+        assert "result" in item
+        assert "date" in item
+
+
+# ---------------------------------------------------------------------------
+# 6c. Games — FIFA World Cup (season=2021 for Qatar 2022; Transfermarkt uses
+#     the season that ends the year the tournament is held)
+# ---------------------------------------------------------------------------
+
+def test_games_world_cup(tmp_path):
+    """Feed the FIFA World Cup competition (saison_id=2021 = Qatar 2022)."""
+    items = run_crawler(
+        "games",
+        parents_data={
+            "type": "competition",
+            "competition_type": "world_cup",
+            "href": "/world-cup/startseite/pokalwettbewerb/FIWC",
+            "competition_name": "World Cup",
+        },
+        season=2021,
+        tmp_path=tmp_path,
+    )
+    assert len(items) >= 60  # Qatar 2022 had 64 games (allow a few failures)
+    for item in items:
+        assert item["type"] == "game"
+        assert "game_id" in item
+        assert "home_club" in item
+        assert "away_club" in item
+        assert "result" in item
+        assert "date" in item
+
+
+# ---------------------------------------------------------------------------
 # 7. Game Lineups (2 requests — 1 game)
 # ---------------------------------------------------------------------------
 
@@ -213,6 +288,104 @@ def test_game_lineups(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# 8. Countries (~1 request — 1 small confederation)
+# ---------------------------------------------------------------------------
+
+def test_countries(tmp_path):
+    """Feed a single confederation (afrika, 1 page) to minimize requests."""
+    items = run_crawler(
+        "countries",
+        parents_data={"type": "confederation", "href": "/wettbewerbe/afrika"},
+        tmp_path=tmp_path,
+    )
+    assert len(items) > 0
+    for item in items:
+        assert item["type"] == "country"
+        assert "href" in item
+        assert "country_id" in item
+        assert "country_name" in item
+        assert "country_code" in item
+        assert "total_clubs" in item
+        assert "total_players" in item
+
+
+# ---------------------------------------------------------------------------
+# 9. National Teams (~2 requests — 1 small country)
+# ---------------------------------------------------------------------------
+
+def test_national_teams(tmp_path):
+    """Feed a single country (Wales, country_id=191)."""
+    items = run_crawler(
+        "national_teams",
+        parents_data={
+            "type": "country",
+            "href": "/wettbewerbe/national/wettbewerbe/191",
+            "country_id": "191",
+            "country_name": "Wales",
+        },
+        tmp_path=tmp_path,
+    )
+    assert len(items) >= 1
+    for item in items:
+        assert item["type"] == "national_team"
+        assert "href" in item
+        assert "name" in item
+        assert "squad_size" in item
+
+
+# ---------------------------------------------------------------------------
+# 10. National Team Players (~30 requests — 1 national team)
+# ---------------------------------------------------------------------------
+
+def test_national_team_players(tmp_path):
+    """Feed a national team (Wales) as parent to players crawler."""
+    items = run_crawler(
+        "players",
+        parents_data={
+            "type": "national_team",
+            "href": "/wales/startseite/verein/3864",
+        },
+        tmp_path=tmp_path,
+    )
+    assert len(items) >= 5
+    for item in items:
+        assert item["type"] == "player"
+        assert "href" in item
+        assert "name" in item
+
+
+# ---------------------------------------------------------------------------
+# 11. Tournament Editions (1 request — World Cup erfolge page)
+# ---------------------------------------------------------------------------
+
+def test_tournament_editions(tmp_path):
+    """Feed the World Cup competition to get all historical editions."""
+    items = run_crawler(
+        "tournament_editions",
+        parents_data={
+            "type": "competition",
+            "competition_type": "world_cup",
+            "href": "/world-cup/startseite/pokalwettbewerb/FIWC",
+            "competition_name": "World Cup",
+        },
+        tmp_path=tmp_path,
+    )
+    assert len(items) >= 20  # at least 20 editions (1930–2022)
+    for item in items:
+        assert item["type"] == "tournament_edition"
+        assert "year" in item
+        assert "season" in item
+        assert "winner" in item
+        assert "winner_href" in item
+        assert "winner_image" in item
+    years = [item["year"] for item in items]
+    assert "2022" in years
+    assert "2018" in years
+    # season field should be year-1 for summer tournaments
+    item_2022 = next(i for i in items if i["year"] == "2022")
+    assert item_2022["season"] == "2021"
+    assert item_2022["winner"] == "Argentina"
+
 # 8. Error propagation — non-zero exit on failed requests
 # ---------------------------------------------------------------------------
 
