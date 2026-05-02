@@ -136,7 +136,9 @@ def test_players(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_appearances(tmp_path):
-    """Feed a single player (Ayoze Perez)."""
+    """Feed a single player (Ayoze Perez) and assert every output field."""
+    import re
+
     items = run_crawler(
         "appearances",
         parents_data={
@@ -146,11 +148,91 @@ def test_appearances(tmp_path):
         tmp_path=tmp_path,
     )
     assert len(items) >= 1
+
+    known_positions = {'GK', 'SW', 'CB', 'LB', 'RB', 'DM', 'CM', 'RM', 'LM', 'AM', 'RW', 'LW', 'SS', 'CF', ''}
+    date_re = re.compile(r'^\d{2}/\d{2}/\d{2}$')
+    result_re = re.compile(r'^\d+:\d+$')
+    stat_re = re.compile(r'^(\d+)?$')          # digit string or empty
+    minutes_re = re.compile(r"^(\d+')?$")      # "85'" or empty
+    club_href_re = re.compile(r'^/spielplan/verein/\d+/saison_id/\d+$')
+
     for item in items:
-        assert item["type"] == "appearance"
-        assert "competition_code" in item
-        assert "date" in item
-        assert "result" in item
+        # Identity
+        assert item['type'] == 'appearance'
+        assert 'leistungsdaten' in item['href']
+
+        # Parent player reference
+        assert item['parent']['type'] == 'player'
+        assert item['parent']['href'].startswith('/')
+
+        # Game identity
+        assert isinstance(item['game_id'], str) and item['game_id'] != ''
+
+        # Competition
+        assert isinstance(item['competition_code'], str) and item['competition_code'] != ''
+        assert isinstance(item['competition_group'], str)   # empty string for league games
+        assert isinstance(item['matchday'], int) or item['matchday'] == ''
+
+        # Date: MM/DD/YY
+        assert date_re.match(item['date']), f"bad date: {item['date']!r}"
+
+        # Venue
+        assert item['venue'] in ('H', 'A')
+
+        # Club objects
+        for key in ('for', 'opponent'):
+            assert item[key]['type'] == 'club'
+            assert club_href_re.match(item[key]['href']), f"bad {key} href: {item[key]['href']!r}"
+
+        # Result: goals:goals
+        assert result_re.match(item['result']), f"bad result: {item['result']!r}"
+
+        # Position: known abbreviation or empty when not recorded
+        assert item['pos'] in known_positions, f"unknown pos: {item['pos']!r}"
+
+        # Player context
+        assert isinstance(item['shirt_number'], int) or item['shirt_number'] is None
+        assert isinstance(item['is_captain'], bool)
+        assert isinstance(item['is_starting'], bool)
+
+        # Substitution minutes: int when applicable, None otherwise
+        assert isinstance(item['on_at'], int) or item['on_at'] is None
+        assert isinstance(item['off_at'], int) or item['off_at'] is None
+        # on_at populated only for substitutes; off_at only for starters who left early
+        if not item['is_starting']:
+            assert item['on_at'] is not None or item['minutes_played'] == ''
+        if item['off_at'] is not None:
+            assert item['is_starting']
+
+        # Legacy stat counters: non-zero digit string or empty
+        for field in ('goals', 'assists', 'yellow_cards', 'second_yellow_cards', 'red_cards'):
+            assert stat_re.match(item[field]), f"bad {field}: {item[field]!r}"
+
+        # Minutes: "85'" or empty
+        assert minutes_re.match(item['minutes_played']), f"bad minutes_played: {item['minutes_played']!r}"
+
+        # New numeric stats: int or None (0 is a valid value)
+        for field in ('own_goals', 'scoring_attempts', 'scoring_attempts_on_goal',
+                      'tackles', 'fouls_committed', 'fouls_gained', 'offsides', 'passes'):
+            assert isinstance(item[field], int) or item[field] is None, \
+                f"bad {field}: {item[field]!r}"
+
+        # Pass accuracy: float/int percentage or None
+        assert isinstance(item['pass_accuracy'], (int, float)) or item['pass_accuracy'] is None
+
+
+def test_appearances_no_stats(tmp_path):
+    """Regression test for issue #100: retired player with no 2024 data returns empty list gracefully."""
+    items = run_crawler(
+        "appearances",
+        parents_data={
+            "type": "player",
+            "href": "/arnor-ingvi-traustason/profil/spieler/176983",
+        },
+        tmp_path=tmp_path,
+    )
+    assert isinstance(items, list)
+    assert len(items) == 0
 
 
 # ---------------------------------------------------------------------------
