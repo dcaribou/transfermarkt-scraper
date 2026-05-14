@@ -79,6 +79,19 @@ echo '{"type":"competition","competition_type":"world_cup","href":"/world-cup/st
 # scrape games for UEFA Euro 2024 (season=2023 on Transfermarkt)
 echo '{"type":"competition","competition_type":"uefa_euro","href":"/uefa-euro/startseite/pokalwettbewerb/EURO","competition_name":"UEFA Euro"}' \
     | python -m tfmkt games --season 2023 > euro_2024_games.json
+
+# scrape transfers for a competition (paste the path from any Transfermarkt URL)
+echo '{"href":"/premier-league/transfers/wettbewerb/GB1/plus/?saison_id=2025&s_w=&leihe=1&intern=0&intern=1"}' \
+    | python -m tfmkt transfers > transfers.json
+
+# scrape transfers for a single club
+echo '{"href":"/ec-cruzeiro-belo-horizonte/transfers/verein/609/saison_id/2025"}' \
+    | python -m tfmkt transfers > transfers.json
+
+# chain: scrape clubs then their transfers
+cat competitions.json | head -1 \
+    | python -m tfmkt clubs \
+    | python -m tfmkt transfers > transfers.json
 ```
 
 Alternatively you can also use [`dcaribou/transfermarkt-scraper`](https://hub.docker.com/repository/docker/dcaribou/transfermarkt-scraper) docker image
@@ -106,6 +119,7 @@ Items are extracted in JSON format with one JSON object per item, which get prin
 | `tournament_editions` | Competition | Tournament Edition | Historical editions with year, season, winner, coach |
 | `games` | Competition | Game | Match result, events, managers. Use `--season` to select the edition (e.g. `--season 2021` for Qatar 2022, `--season 2023` for Euro 2024) |
 | `game_lineups` | Game | Game Lineups | Starting XI, substitutes, formation |
+| `transfers` | Club or Competition | Transfer | Arrivals and departures with fee, market value, and player href |
 
 Check out [transfermarkt-datasets](https://github.com/dcaribou/transfermarkt-datasets) to see `transfermarkt-scraper` in action on a real project.
 
