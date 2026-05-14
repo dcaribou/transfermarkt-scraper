@@ -13,6 +13,7 @@ CRAWLER_MODULES = {
     'tournament_editions': 'tfmkt.crawlers.tournament_editions',
     'games': 'tfmkt.crawlers.games',
     'game_lineups': 'tfmkt.crawlers.game_lineups',
+    'transfers': 'tfmkt.crawlers.transfers',
 }
 
 

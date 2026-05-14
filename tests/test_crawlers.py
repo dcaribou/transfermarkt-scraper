@@ -468,6 +468,67 @@ def test_tournament_editions(tmp_path):
     assert item_2022["season"] == "2021"
     assert item_2022["winner"] == "Argentina"
 
+# ---------------------------------------------------------------------------
+# 12. Transfers (1 request — 1 small club)
+# ---------------------------------------------------------------------------
+
+def test_transfers(tmp_path):
+    """Feed a single small club (HNK Sibenik) to get its transfer activity."""
+    items = run_crawler(
+        "transfers",
+        parents_data={
+            "type": "club",
+            "href": "/hnk-sibenik/startseite/verein/223",
+        },
+        tmp_path=tmp_path,
+    )
+    assert len(items) >= 1
+    for item in items:
+        assert item["type"] == "transfer"
+        assert "player" in item
+        assert "direction" in item
+        assert item["direction"] in ("In", "Out", "")
+        assert "club" in item
+        assert "origin_club" in item
+        assert "market_value" in item
+        assert "nationality" in item
+        assert "position" in item
+        assert "age" in item
+        assert "fee" in item
+        assert "source" in item
+        assert "player_href" in item
+        assert item["player_href"] == '' or item["player_href"].startswith("/")
+        assert "parent" in item
+
+    assert any(item["player_href"] for item in items)
+    # club field should be the club name, not a section heading like "Arrivals"
+    direction_words = {'in', 'out', 'arrivals', 'departures'}
+    assert all(item["club"].lower() not in direction_words for item in items)
+
+
+def test_transfers_competition(tmp_path):
+    """Feed a competition transfers page (Croatian 1.HNL) to verify the plus/ layout."""
+    items = run_crawler(
+        "transfers",
+        parents_data={
+            "href": "/1-hnl/transfers/wettbewerb/KR1/plus/?saison_id=2024&s_w=&leihe=1&intern=0&intern=1",
+        },
+        tmp_path=tmp_path,
+    )
+    assert len(items) >= 1
+    for item in items:
+        assert item["type"] == "transfer"
+        assert item["player_href"].startswith("/")
+        assert item["direction"] in ("In", "Out", "")
+
+    assert any(item["age"] for item in items)
+    assert any(item["nationality"] for item in items)
+    assert any(item["position"] for item in items)
+    assert any(item["market_value"] for item in items)
+    assert any(item["club"] for item in items)
+
+
+# ---------------------------------------------------------------------------
 # 8. Error propagation — non-zero exit on failed requests
 # ---------------------------------------------------------------------------
 
