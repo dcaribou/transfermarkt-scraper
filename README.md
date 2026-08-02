@@ -35,8 +35,11 @@ This project uses [Crawlee for Python](https://crawlee.dev/python/) and can be r
 ```console
 cd transfermarkt-scraper
 poetry install
+poetry run playwright install chromium
 poetry shell
 ```
+
+> On Linux, Docker, or CI, use `poetry run playwright install --with-deps chromium` instead, so the required OS-level libraries get installed alongside the browser.
 
 ## Usage
 
