@@ -32,6 +32,8 @@ jobs:
         installer-parallel: true
     - name: Install library
       run: poetry install --no-interaction
+    - name: Install Playwright browser
+      run: poetry run playwright install --with-deps chromium
     - name: Verify confederations crawler
       run: |
         poetry run python -m tfmkt confederations
