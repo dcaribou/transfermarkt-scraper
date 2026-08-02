@@ -76,30 +76,48 @@ async def run(parents_arg=None, season=2024, base_url=None):
     parents = load_parents(parents_arg)
     requests = build_initial_requests(parents, season, base_url, label='parse', spider_name='games')
 
-    crawler, failures = create_crawler()
+    crawler, failures = create_crawler(adaptive_crawler=True)
 
     @crawler.router.handler('parse')
     async def parse(context) -> None:
         parent = context.request.user_data['parent']
-        sel = context.selector
-
         cb_data = {'parent': parent}
-
-        # Try named footer links first (domestic competitions)
         next_url = None
-        footer_links = sel.css('div.footer-links')
-        for footer_link in footer_links:
-            text = footer_link.xpath('a//text()').get()
-            if text and text.strip() in ["All fixtures & results", "All games"]:
-                next_url = footer_link.xpath('a/@href').get()
-                break
 
-        # Fallback: find any gesamtspielplan link on the page (tournament competitions
-        # like UEFA Euro use a different footer link text or page layout)
+        is_browser = hasattr(context, 'page') and context.page is not None
+
+        # 1. PLAYWRIGHT MODE (Svelte)
+        if is_browser:
+            try:
+                # Playwright can pierce the Shadow DOM and search text directly
+                locator_str = (
+                    ':is(div.footer-buttons, div.footer-links) '
+                    'a:is(:has-text("All games"), :has-text("All fixtures & results"))'
+                )
+                link_locator = context.page.locator(locator_str).first
+
+                await link_locator.wait_for(state="attached", timeout=15000)
+                next_url = await link_locator.get_attribute('href')
+                
+            except Exception as e:
+                raise RuntimeError(f"Browser wait/extraction failed: {e}") from e
+
+        # 2. HTTP MODE / FALLBACK (Static HTML)
         if not next_url:
-            gesamtspielplan_links = sel.xpath('//a[contains(@href, "/gesamtspielplan/")]')
-            if gesamtspielplan_links:
-                next_url = gesamtspielplan_links[0].xpath('@href').get()
+            sel = context.parsed_content # Changed to parsed_content for AdaptiveCrawler compatibility
+            footer_links = sel.css('div.footer-links, div.footer-buttons')
+
+            for footer_link in footer_links:
+                text = footer_link.xpath('string(.)').get()
+                if text and text.strip() in ["All fixtures & results", "All games"]:
+                    next_url = footer_link.xpath('.//@href').get()
+                    break
+
+            # Fallback for tournaments like UEFA Euro
+            if not next_url:
+                gesamtspielplan_links = sel.xpath('//a[contains(@href, "/gesamtspielplan/")]')
+                if gesamtspielplan_links:
+                    next_url = gesamtspielplan_links[0].xpath('@href').get()
 
         if next_url:
             await context.add_requests([
@@ -113,7 +131,7 @@ async def run(parents_arg=None, season=2024, base_url=None):
     @crawler.router.handler('extract_game_urls')
     async def extract_game_urls_handler(context) -> None:
         base = context.request.user_data['base']
-        sel = context.selector
+        sel = context.parsed_content
 
         game_links = sel.css('a.ergebnis-link')
         new_requests = []
@@ -137,7 +155,7 @@ async def run(parents_arg=None, season=2024, base_url=None):
     @crawler.router.handler('parse_game')
     async def parse_game(context) -> None:
         base = context.request.user_data['base']
-        sel = context.selector
+        sel = context.parsed_content
 
         game_id = int(base['href'].split('/')[-1])
 
@@ -240,7 +258,12 @@ async def run(parents_arg=None, season=2024, base_url=None):
             item["home_manager"] = {'name': home_manager_name, 'href': home_manager_href}
             item["away_manager"] = {'name': away_manager_name, 'href': away_manager_href}
 
-        print(json.dumps(item), flush=True)
+        await context.push_data(item) # Push to dataset to prevent AdaptiveCrawler duplicates.
 
     await crawler.run(requests)
+
+    dataset = await crawler.get_data()
+    for item in dataset.items:
+        print(json.dumps(item), flush=True)
+
     check_failures(failures)
