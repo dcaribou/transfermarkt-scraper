@@ -4,21 +4,28 @@ import gzip
 import logging
 
 from crawlee import Request
-from crawlee.crawlers import ParselCrawler
+from crawlee.crawlers import ParselCrawler, AdaptivePlaywrightCrawler
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_BASE_URL = 'https://www.transfermarkt.co.uk'
 
 
-def create_crawler():
-    """Create a ParselCrawler that tracks failed requests.
+def create_crawler(adaptive_crawler=False):
+    """Create a Parsel or AdaptivePlaywright crawler that tracks failed requests.
+
+    Pass `adaptive_crawler=True` to use the AdaptivePlaywrightCrawler instead 
+    of the default ParselCrawler.
 
     Returns a (crawler, failures) tuple. After crawler.run(), call
     check_failures(failures) to exit with non-zero status if any requests failed.
     """
     failures = []
-    crawler = ParselCrawler()
+
+    if not adaptive_crawler:
+        crawler = ParselCrawler()
+    else:
+        crawler = AdaptivePlaywrightCrawler.with_parsel_static_parser()
 
     @crawler.failed_request_handler
     async def on_failed_request(context, error):
