@@ -5,7 +5,7 @@ import logging
 from datetime import timedelta
 
 from crawlee import Request
-from crawlee.crawlers import ParselCrawler, AdaptivePlaywrightCrawler
+from crawlee.crawlers import ParselCrawler
 
 from tfmkt.brightdata import build_http_client
 
@@ -14,12 +14,11 @@ logger = logging.getLogger(__name__)
 DEFAULT_BASE_URL = 'https://www.transfermarkt.co.uk'
 
 
-def create_crawler(adaptive_crawler=False, crawler_class=ParselCrawler, use_unlocker=True):
+def create_crawler(crawler_class=ParselCrawler, use_unlocker=True):
     """Create a crawler that goes through Bright Data and tracks failed requests.
 
-    Pass `adaptive_crawler=True` to use the AdaptivePlaywrightCrawler instead
-    of the default ParselCrawler, or `crawler_class` to pick another static
-    crawler (for example HttpCrawler for JSON endpoints).
+    Pass `crawler_class` to pick a different static crawler, for example
+    HttpCrawler for JSON endpoints.
 
     Build every crawler here rather than constructing one directly, so it picks
     up the Web Unlocker client: Transfermarkt blocks direct requests from
@@ -35,12 +34,10 @@ def create_crawler(adaptive_crawler=False, crawler_class=ParselCrawler, use_unlo
     http_client = build_http_client() if use_unlocker else None
     crawler_options = {'http_client': http_client}
 
-    if not adaptive_crawler:
-        if http_client is not None:
-            crawler_options['navigation_timeout'] = timedelta(seconds=120)
-        crawler = crawler_class(**crawler_options)
-    else:
-        crawler = AdaptivePlaywrightCrawler.with_parsel_static_parser(**crawler_options)
+    if http_client is not None:
+        crawler_options['navigation_timeout'] = timedelta(seconds=120)
+
+    crawler = crawler_class(**crawler_options)
 
     @crawler.failed_request_handler
     async def on_failed_request(context, error):

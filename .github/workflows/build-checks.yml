@@ -34,10 +34,6 @@ jobs:
         installer-parallel: true
     - name: Install library
       run: poetry install --no-interaction
-    - name: Install Playwright browser
-      run: poetry run playwright install --with-deps chromium
-    - name: Allow unprivileged user namespaces for Chromium sandbox
-      run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
     - name: Verify confederations crawler
       run: |
         poetry run python -m tfmkt confederations
