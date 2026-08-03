@@ -76,57 +76,40 @@ async def run(parents_arg=None, season=2024, base_url=None):
     parents = load_parents(parents_arg)
     requests = build_initial_requests(parents, season, base_url, label='parse', spider_name='games')
 
-    crawler, failures = create_crawler(adaptive_crawler=True)
+    crawler, failures = create_crawler()
 
     @crawler.router.handler('parse')
     async def parse(context) -> None:
         parent = context.request.user_data['parent']
         cb_data = {'parent': parent}
-        next_url = None
 
-        is_browser = hasattr(context, 'page') and context.page is not None
+        # The "All games" link is Svelte-rendered, so it is never in the static
+        # HTML, but its destination is derivable: the fixture list lives at the
+        # same URL with /startseite/ swapped for /gesamtspielplan/.
+        #
+        # Derive it from the loaded URL rather than the requested one. Renamed
+        # competitions redirect (DFL Supercup -> Franz-Beckenbauer-Supercup), and
+        # only the post-redirect URL carries the slug the fixture list is served
+        # under.
+        loaded_url = context.request.loaded_url or context.request.url
+        if '/startseite/' not in loaded_url:
+            raise RuntimeError(f"Cannot derive a fixture list URL from {loaded_url}")
 
-        # 1. PLAYWRIGHT MODE (Svelte)
-        if is_browser:
-            try:
-                # Playwright can pierce the Shadow DOM and search text directly
-                locator_str = (
-                    ':is(div.footer-buttons, div.footer-links) '
-                    'a:is(:has-text("All games"), :has-text("All fixtures & results"))'
-                )
-                link_locator = context.page.locator(locator_str).first
+        next_url = loaded_url.replace('/startseite/', '/gesamtspielplan/')
 
-                await link_locator.wait_for(state="attached", timeout=15000)
-                next_url = await link_locator.get_attribute('href')
-                
-            except Exception as e:
-                raise RuntimeError(f"Browser wait/extraction failed: {e}") from e
+        # Those redirects drop the query string, and without saison_id
+        # Transfermarkt serves the current season instead of the requested one.
+        if 'saison_id=' not in next_url:
+            separator = '&' if '?' in next_url else '?'
+            next_url = f"{next_url}{separator}saison_id={season}"
 
-        # 2. HTTP MODE / FALLBACK (Static HTML)
-        if not next_url:
-            sel = context.parsed_content # Changed to parsed_content for AdaptiveCrawler compatibility
-            footer_links = sel.css('div.footer-links, div.footer-buttons')
-
-            for footer_link in footer_links:
-                text = footer_link.xpath('string(.)').get()
-                if text and text.strip() in ["All fixtures & results", "All games"]:
-                    next_url = footer_link.xpath('.//@href').get()
-                    break
-
-            # Fallback for tournaments like UEFA Euro
-            if not next_url:
-                gesamtspielplan_links = sel.xpath('//a[contains(@href, "/gesamtspielplan/")]')
-                if gesamtspielplan_links:
-                    next_url = gesamtspielplan_links[0].xpath('@href').get()
-
-        if next_url:
-            await context.add_requests([
-                Request.from_url(
-                    url=base_url + next_url,
-                    label='extract_game_urls',
-                    user_data={'base': cb_data},
-                )
-            ])
+        await context.add_requests([
+            Request.from_url(
+                url=next_url,
+                label='extract_game_urls',
+                user_data={'base': cb_data},
+            )
+        ])
 
     @crawler.router.handler('extract_game_urls')
     async def extract_game_urls_handler(context) -> None:
