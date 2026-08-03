@@ -2,9 +2,8 @@ import json
 import re
 
 from crawlee import Request
-from crawlee.crawlers import ParselCrawler
 
-from tfmkt.common import DEFAULT_BASE_URL, load_parents, build_initial_requests
+from tfmkt.common import DEFAULT_BASE_URL, load_parents, build_initial_requests, create_crawler, check_failures
 
 
 async def run(parents_arg=None, season=2024, base_url=None):
@@ -18,7 +17,7 @@ async def run(parents_arg=None, season=2024, base_url=None):
 
     seen_countries = set()
 
-    crawler = ParselCrawler()
+    crawler, failures = create_crawler()
 
     @crawler.router.handler('parse')
     async def parse(context) -> None:
@@ -99,3 +98,4 @@ async def run(parents_arg=None, season=2024, base_url=None):
             print(json.dumps(item), flush=True)
 
     await crawler.run(requests)
+    check_failures(failures)

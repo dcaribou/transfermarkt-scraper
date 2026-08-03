@@ -95,6 +95,18 @@ docker run \
 
 Items are extracted in JSON format with one JSON object per item, which get printed to the `stdout`. Samples of extracted data are provided in the [samples](samples) folder.
 
+### Anti-bot / proxy support
+
+> [!NOTE]
+> This optional integration is intended to stabilize this project's existing CI tests when
+> requests from GitHub Actions infrastructure are blocked. It is not intended to bypass access
+> controls or encourage unlawful or unauthorized scraping. Users are responsible for complying
+> with applicable laws, website terms, and access restrictions.
+
+By default, requests are sent directly to Transfermarkt. When `BRIGHTDATA_API_KEY` is set to a
+non-empty value, responses that match a DataDome block are automatically retried through the
+Bright Data Web Unlocker API.
+
 ### Crawlers
 
 | Crawler | Input | Output | Notes |

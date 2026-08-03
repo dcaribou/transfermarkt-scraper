@@ -2,9 +2,12 @@ import sys
 import json
 import gzip
 import logging
+from datetime import timedelta
 
 from crawlee import Request
 from crawlee.crawlers import ParselCrawler, AdaptivePlaywrightCrawler
+
+from tfmkt.brightdata import build_http_client
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +25,15 @@ def create_crawler(adaptive_crawler=False):
     """
     failures = []
 
+    http_client = build_http_client()
+    crawler_options = {'http_client': http_client}
+
     if not adaptive_crawler:
-        crawler = ParselCrawler()
+        if http_client is not None:
+            crawler_options['navigation_timeout'] = timedelta(seconds=120)
+        crawler = ParselCrawler(**crawler_options)
     else:
-        crawler = AdaptivePlaywrightCrawler.with_parsel_static_parser()
+        crawler = AdaptivePlaywrightCrawler.with_parsel_static_parser(**crawler_options)
 
     @crawler.failed_request_handler
     async def on_failed_request(context, error):
