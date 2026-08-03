@@ -6,7 +6,7 @@ from datetime import datetime
 from crawlee import Request
 from crawlee.crawlers import HttpCrawler
 
-from tfmkt.common import DEFAULT_BASE_URL, load_parents, check_failures
+from tfmkt.common import DEFAULT_BASE_URL, load_parents, check_failures, create_crawler
 
 logger = logging.getLogger(__name__)
 
@@ -50,12 +50,7 @@ async def run(parents_arg=None, season=2024, base_url=None):
             )
         )
 
-    failures = []
-    crawler = HttpCrawler()
-
-    @crawler.failed_request_handler
-    async def on_failed_request(context, error):
-        failures.append((context.request.url, error))
+    crawler, failures = create_crawler(crawler_class=HttpCrawler)
 
     @crawler.router.default_handler
     async def parse_api(context) -> None:
