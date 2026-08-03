@@ -59,7 +59,19 @@ async def run(parents_arg=None, season=2024, base_url=None):
         stats_href = context.request.user_data['stats_href']
 
         body = await context.http_response.read()
-        data = json.loads(body)
+        try:
+            data = json.loads(body)
+        except json.JSONDecodeError as e:
+            response = context.http_response
+            try:
+                content_type = dict(response.headers).get('content-type', '<none>')
+            except Exception:  # diagnostics must never mask the real failure
+                content_type = '<unavailable>'
+            raise RuntimeError(
+                f"Expected JSON from {context.request.url}, got status "
+                f"{response.status_code}, content-type {content_type}, "
+                f"body starts: {body[:200]!r}"
+            ) from e
 
         if not data.get('success'):
             logger.warning("API returned success=false for %s", context.request.url)
