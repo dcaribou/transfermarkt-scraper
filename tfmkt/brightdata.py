@@ -100,7 +100,7 @@ class WebUnlockerHttpClient(HttpClient):
                     'zone': self._zone,
                     'url': request.url,
                     'format': 'raw',
-                }),
+                }).encode('utf-8'),
                 session=session,
                 timeout=timeout,
             )
