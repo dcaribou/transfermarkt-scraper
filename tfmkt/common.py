@@ -14,23 +14,25 @@ logger = logging.getLogger(__name__)
 DEFAULT_BASE_URL = 'https://www.transfermarkt.co.uk'
 
 
-def create_crawler(adaptive_crawler=False, crawler_class=ParselCrawler):
+def create_crawler(adaptive_crawler=False, crawler_class=ParselCrawler, use_unlocker=True):
     """Create a crawler that goes through Bright Data and tracks failed requests.
 
     Pass `adaptive_crawler=True` to use the AdaptivePlaywrightCrawler instead
     of the default ParselCrawler, or `crawler_class` to pick another static
     crawler (for example HttpCrawler for JSON endpoints).
 
-    Every crawler must be built here: constructing one directly skips the Web
-    Unlocker client, and Transfermarkt blocks direct requests from datacenter
-    IPs such as CI runners.
+    Build every crawler here rather than constructing one directly, so it picks
+    up the Web Unlocker client: Transfermarkt blocks direct requests from
+    datacenter IPs such as CI runners. Pass `use_unlocker=False` only for
+    targets Bright Data refuses to proxy, which it does for any path
+    Transfermarkt disallows in robots.txt.
 
     Returns a (crawler, failures) tuple. After crawler.run(), call
     check_failures(failures) to exit with non-zero status if any requests failed.
     """
     failures = []
 
-    http_client = build_http_client()
+    http_client = build_http_client() if use_unlocker else None
     crawler_options = {'http_client': http_client}
 
     if not adaptive_crawler:

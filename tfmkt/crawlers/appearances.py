@@ -6,6 +6,7 @@ from datetime import datetime
 from crawlee import Request
 from crawlee.crawlers import HttpCrawler
 
+from tfmkt.brightdata import looks_blocked
 from tfmkt.common import DEFAULT_BASE_URL, load_parents, check_failures, create_crawler
 
 logger = logging.getLogger(__name__)
@@ -50,7 +51,11 @@ async def run(parents_arg=None, season=2024, base_url=None):
             )
         )
 
-    crawler, failures = create_crawler(crawler_class=HttpCrawler)
+    # No Web Unlocker here: /ceapi is disallowed in Transfermarkt's robots.txt,
+    # and Bright Data refuses to proxy it without KYC, answering 200 with a
+    # "Residential Failed (bad_endpoint)" body instead of the JSON. Going direct
+    # works from unblocked IPs and fails honestly from blocked ones.
+    crawler, failures = create_crawler(crawler_class=HttpCrawler, use_unlocker=False)
 
     @crawler.router.default_handler
     async def parse_api(context) -> None:
@@ -63,6 +68,13 @@ async def run(parents_arg=None, season=2024, base_url=None):
             data = json.loads(body)
         except json.JSONDecodeError as e:
             response = context.http_response
+            if looks_blocked(response.status_code, body):
+                raise RuntimeError(
+                    f"Blocked by Transfermarkt at {context.request.url}. This IP "
+                    f"cannot reach /ceapi, and Bright Data will not proxy it, so "
+                    f"appearances cannot be scraped from here. Status "
+                    f"{response.status_code}, body starts: {body[:120]!r}"
+                ) from e
             try:
                 content_type = dict(response.headers).get('content-type', '<none>')
             except Exception:  # diagnostics must never mask the real failure
