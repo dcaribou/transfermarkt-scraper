@@ -334,6 +334,34 @@ def test_games_world_cup(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# 6d. Games — UEFA Super Cup (supercup competition)
+# ---------------------------------------------------------------------------
+
+def test_games_uefa_super_cup(tmp_path):
+    """Feed the UEFA Super Cup competition."""
+    items = run_crawler(
+        "games",
+        parents_data={
+            "type": "competition",
+            "competition_type": "international_super_cup",
+            "href": "/uefa-super-cup/startseite/pokalwettbewerb/USC/",
+            "competition_name": "UEFA Super Cup",
+        },
+        season=2025,
+        tmp_path=tmp_path,
+    )
+
+    assert len(items) == 1
+
+    item = items[0]
+    assert item["type"] == "game"
+    assert "game_id" in item
+    assert "home_club" in item
+    assert "away_club" in item
+    assert "result" in item
+    assert "date" in item
+
+# ---------------------------------------------------------------------------
 # 7. Game Lineups (2 requests — 1 game)
 # ---------------------------------------------------------------------------
 

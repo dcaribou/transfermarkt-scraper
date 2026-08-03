@@ -5,7 +5,7 @@ import logging
 from datetime import timedelta
 
 from crawlee import Request
-from crawlee.crawlers import ParselCrawler
+from crawlee.crawlers import ParselCrawler, AdaptivePlaywrightCrawler
 
 from tfmkt.brightdata import build_http_client
 
@@ -14,18 +14,26 @@ logger = logging.getLogger(__name__)
 DEFAULT_BASE_URL = 'https://www.transfermarkt.co.uk'
 
 
-def create_crawler():
-    """Create a ParselCrawler that tracks failed requests.
+def create_crawler(adaptive_crawler=False):
+    """Create a Parsel or AdaptivePlaywright crawler that tracks failed requests.
+
+    Pass `adaptive_crawler=True` to use the AdaptivePlaywrightCrawler instead 
+    of the default ParselCrawler.
 
     Returns a (crawler, failures) tuple. After crawler.run(), call
     check_failures(failures) to exit with non-zero status if any requests failed.
     """
     failures = []
+
     http_client = build_http_client()
     crawler_options = {'http_client': http_client}
-    if http_client is not None:
-        crawler_options['navigation_timeout'] = timedelta(seconds=120)
-    crawler = ParselCrawler(**crawler_options)
+
+    if not adaptive_crawler:
+        if http_client is not None:
+            crawler_options['navigation_timeout'] = timedelta(seconds=120)
+        crawler = ParselCrawler(**crawler_options)
+    else:
+        crawler = AdaptivePlaywrightCrawler.with_parsel_static_parser(**crawler_options)
 
     @crawler.failed_request_handler
     async def on_failed_request(context, error):
