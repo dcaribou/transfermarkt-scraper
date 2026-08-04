@@ -361,6 +361,44 @@ def test_games_uefa_super_cup(tmp_path):
     assert "result" in item
     assert "date" in item
 
+
+# ---------------------------------------------------------------------------
+# 6e. Games — LaLiga (~15 requests — capped; domestic league)
+#     The other games tests are all cups, and leagues reach their fixture list
+#     through /wettbewerb/ rather than /pokalwettbewerb/. A full LaLiga season
+#     is 380 games, so the crawl is capped: scraping every one proves nothing
+#     the first handful do not.
+# ---------------------------------------------------------------------------
+
+def test_games_domestic_league(tmp_path):
+    """Feed LaLiga (saison_id=2024 = 2024/25), stopping after a sample of games."""
+    items = run_crawler(
+        "games",
+        parents_data={
+            "type": "competition",
+            "competition_type": "first_tier",
+            "href": "/laliga/startseite/wettbewerb/ES1",
+            "competition_name": "LaLiga",
+        },
+        season=2024,
+        tmp_path=tmp_path,
+        # 2 requests reach the fixture list, the rest are games. In-flight
+        # requests still finish once the cap trips, so this is a floor.
+        max_requests=15,
+    )
+
+    assert len(items) >= 10
+    for item in items:
+        assert item["type"] == "game"
+        assert "game_id" in item
+        assert "home_club" in item
+        assert "away_club" in item
+        assert "result" in item
+        assert "date" in item
+        # Leagues number their matchdays, where cups label rounds ("Group A")
+        assert "matchday" in item
+
+
 # ---------------------------------------------------------------------------
 # 7. Game Lineups (2 requests — 1 game)
 # ---------------------------------------------------------------------------
