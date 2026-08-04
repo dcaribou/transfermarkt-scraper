@@ -1,13 +1,18 @@
 import json
+import os
 import subprocess
 import sys
 
 
-def run_crawler(crawler_name, parents_data=None, season=2024, tmp_path=None):
+def run_crawler(crawler_name, parents_data=None, season=2024, tmp_path=None,
+                max_requests=None):
     """Run a crawler as a subprocess and return parsed JSONL items.
 
     This runs each crawler in its own process, matching real CLI usage
     and avoiding Crawlee event-loop isolation issues between tests.
+
+    Pass `max_requests` to stop the crawl early, for competitions whose full
+    output is far larger than what the assertions need.
     """
     cmd = [sys.executable, "-m", "tfmkt", crawler_name, "-s", str(season)]
 
@@ -22,7 +27,11 @@ def run_crawler(crawler_name, parents_data=None, season=2024, tmp_path=None):
         parents_file.write_text("\n".join(lines) + "\n")
         cmd.extend(["-p", str(parents_file)])
 
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+    env = dict(os.environ)
+    if max_requests is not None:
+        env["TFMKT_MAX_REQUESTS"] = str(max_requests)
+
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=300, env=env)
 
     assert result.returncode == 0, f"Crawler failed:\n{result.stderr}"
 

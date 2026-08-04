@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 import gzip
@@ -26,6 +27,10 @@ def create_crawler(crawler_class=ParselCrawler, use_unlocker=True):
     targets Bright Data refuses to proxy, which it does for any path
     Transfermarkt disallows in robots.txt.
 
+    Set TFMKT_MAX_REQUESTS to stop a crawl early. Useful for smoke runs against
+    competitions too large to scrape in full, where the point is to prove the
+    crawler works rather than to collect everything.
+
     Returns a (crawler, failures) tuple. After crawler.run(), call
     check_failures(failures) to exit with non-zero status if any requests failed.
     """
@@ -36,6 +41,10 @@ def create_crawler(crawler_class=ParselCrawler, use_unlocker=True):
 
     if http_client is not None:
         crawler_options['navigation_timeout'] = timedelta(seconds=120)
+
+    max_requests = os.environ.get('TFMKT_MAX_REQUESTS')
+    if max_requests:
+        crawler_options['max_requests_per_crawl'] = int(max_requests)
 
     crawler = crawler_class(**crawler_options)
 
